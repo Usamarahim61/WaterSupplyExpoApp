@@ -1,20 +1,29 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons'; // Built into Expo
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
 
-  const handleLogin = () => {
-    // In a real app, you'd validate credentials here.
-    // For now, we navigate directly to the Admin Dashboard.
-    navigation.navigate('AdminDashboard');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Navigation will be handled by AuthContext
+    } catch (error) {
+      Alert.alert('Login Failed', error.message);
+    }
   };
   return (
     <View style={styles.container}>

@@ -1,19 +1,35 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BarChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
+import { useAuth } from '../AuthContext';
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function AdminDashboard({navigation}) {
+  const { logout } = useAuth();
+
   // Mock Data for Monthly Collection
   const chartData = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     datasets: [{ data: [20, 45, 28, 80, 99, 43] }]
   };
-const handleNavigation = (navigate)=>{
-navigation.navigate(navigate)}
+
+  const handleNavigation = (navigate)=>{
+    navigation.navigate(navigate);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', onPress: logout },
+      ]
+    );
+  };
 
 const SummaryCard = ({ title, value, icon, color, onPress }) => (
     <TouchableOpacity 
@@ -36,7 +52,7 @@ const SummaryCard = ({ title, value, icon, color, onPress }) => (
           <Text style={styles.welcomeText}>Admin Panel</Text>
           <Text style={styles.subText}>Water Supply Management</Text>
         </View>
-        <TouchableOpacity style={styles.profileBtn}>
+        <TouchableOpacity style={styles.profileBtn} onPress={handleLogout}>
           <Ionicons name="person-circle" size={40} color="#0047AB" />
         </TouchableOpacity>
       </View>
