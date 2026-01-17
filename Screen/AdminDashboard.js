@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, Scr
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../AuthContext';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 export default function AdminDashboard({ navigation }) {
@@ -12,10 +12,13 @@ export default function AdminDashboard({ navigation }) {
   // State for staff and customers data
   const [staff, setStaff] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [bills, setBills] = useState([]);
   const [staffAssignments, setStaffAssignments] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedStaffCustomers, setSelectedStaffCustomers] = useState([]);
   const [selectedStaffName, setSelectedStaffName] = useState('');
+  const [pendingBills, setPendingBills] = useState(0);
+  const [fixedPrice, setFixedPrice] = useState(1000);
 
   useEffect(() => {
     // Fetch staff and customers data
@@ -39,9 +42,30 @@ export default function AdminDashboard({ navigation }) {
           setCustomers(customersData);
         });
 
+        const billsCollection = collection(db, "bills");
+        const billsUnsubscribe = onSnapshot(billsCollection, (snapshot) => {
+          const billsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setBills(billsData);
+        });
+
+        const settingsCollection = collection(db, "settings");
+        const settingsUnsubscribe = onSnapshot(settingsCollection, (snapshot) => {
+          if (!snapshot.empty) {
+            const settingsData = snapshot.docs[0].data();
+            setFixedPrice(settingsData.fixedPrice || 1000);
+          } else {
+            setFixedPrice(1000);
+          }
+        });
+
         return () => {
           staffUnsubscribe();
           customersUnsubscribe();
+          billsUnsubscribe();
+          settingsUnsubscribe();
         };
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -51,7 +75,7 @@ export default function AdminDashboard({ navigation }) {
     fetchData();
   }, []);
 
-  // Process staff assignments when staff or customers change
+  // Process staff assignments and pending bills when staff or customers change
   useEffect(() => {
     const assignments = staff.map((staffMember) => {
       const assignedCustomers = customers.filter(
@@ -64,7 +88,11 @@ export default function AdminDashboard({ navigation }) {
       };
     });
     setStaffAssignments(assignments);
-  }, [staff, customers]);
+
+    // Calculate pending bills using the fixed price from backend
+    const pendingAmount = customers.length * fixedPrice;
+    setPendingBills(pendingAmount);
+  }, [staff, customers, fixedPrice]);
 
   const handleNavigation = (navigate) => {
     navigation.navigate(navigate);
@@ -77,6 +105,48 @@ export default function AdminDashboard({ navigation }) {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Logout', onPress: logout },
+      ]
+    );
+  };
+
+  const handleGenerateBills = async () => {
+    if (customers.length === 0) {
+      Alert.alert('No Customers', 'There are no customers to generate bills for.');
+      return;
+    }
+
+    Alert.alert(
+      'Generate Bills',
+      `Generate bills for ${customers.length} customers at Rs.${fixedPrice} each?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Generate',
+          onPress: async () => {
+            try {
+              const billsToCreate = customers.map(customer => ({
+                customerId: customer.id,
+                amount: fixedPrice,
+                status: 'pending',
+                billDate: new Date(),
+                paymentDate: null,
+                notes: `Monthly bill generated on ${new Date().toLocaleDateString()}`
+              }));
+
+              // Create all bills in batch
+              const promises = billsToCreate.map(bill =>
+                addDoc(collection(db, "bills"), bill)
+              );
+
+              await Promise.all(promises);
+
+              Alert.alert('Success', `Generated ${customers.length} bills successfully!`);
+            } catch (error) {
+              console.error('Error generating bills:', error);
+              Alert.alert('Error', 'Failed to generate bills. Please try again.');
+            }
+          }
+        }
       ]
     );
   };
@@ -165,28 +235,28 @@ export default function AdminDashboard({ navigation }) {
           <View style={styles.statsGrid}>
             <StatCard
               title="Total Customers"
-              value="1,240"
+              value={customers.length.toString()}
               icon="people"
               gradient={['#0ea5e9', '#0284c7']}
               onPress={() => handleNavigation('ManageCustomers')}
             />
             <StatCard
               title="Active Staff"
-              value="12"
+              value={staff.length.toString()}
               icon="person"
               gradient={['#06b6d4', '#0891b2']}
               onPress={() => handleNavigation('ManageStaff')}
             />
             <StatCard
               title="Pending Bills"
-              value="45"
+              value={`Rs.${pendingBills.toLocaleString()}`}
               icon="document-text"
               gradient={['#f59e0b', '#d97706']}
-              onPress={() => navigation.navigate('ManageCustomers')}
+              onPress={() => navigation.navigate('PendingBills')}
             />
             <StatCard
               title="Revenue"
-              value="$4,200"
+              value="Rs.4,200"
               icon="cash"
               gradient={['#10b981', '#059669']}
               onPress={() => navigation.navigate('ManageCustomers')}
@@ -215,6 +285,7 @@ export default function AdminDashboard({ navigation }) {
               icon="receipt"
               title="Generate Bills"
               subtitle="Create monthly invoices"
+              onPress={handleGenerateBills}
               color="#10b981"
             />
             <ActionCard

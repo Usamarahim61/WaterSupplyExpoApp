@@ -7,6 +7,8 @@ import AdminDashboard from './Screen/AdminDashboard';
 import ManageCustomers from './Screen/ManageCustomers';
 import ManageStaff from './Screen/ManageStaff';
 import AssignCustomers from './Screen/AssignCustomers';
+import PendingBills from './Screen/PendingBills';
+import PaymentHistory from './Screen/PaymentHistory';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +28,8 @@ function AppNavigator() {
             <Stack.Screen name="ManageCustomers" component={ManageCustomers} />
             <Stack.Screen name="ManageStaff" component={ManageStaff} />
             <Stack.Screen name="AssignCustomers" component={AssignCustomers} />
+            <Stack.Screen name="PendingBills" component={PendingBills} />
+            <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />

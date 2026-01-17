@@ -1,10 +1,12 @@
-# TODO: Update AssignCustomers.js to use Firebase and show staff-customer assignments
+# Bill Tracking System Implementation
 
-- [ ] Import Firebase functions (collection, getDocs, updateDoc, doc, onSnapshot)
-- [ ] Replace mock staff data with Firebase fetch from "staff" collection
-- [ ] Replace mock customers data with Firebase fetch from "customers" collection
-- [ ] Update assignment logic to save "assignedTo" field to Firebase customers collection
-- [ ] Add real-time updates using onSnapshot for both collections
-- [ ] Update UI to show assigned customers grouped by staff
-- [ ] Add loading states and error handling
-- [ ] Update customer selection to prevent assigning already assigned customers
+## Tasks
+- [x] Create new Screen/PaymentHistory.js for viewing customer payment history
+- [ ] Modify Screen/PendingBills.js to fetch actual bill data and add "View History" functionality
+- [ ] Update Screen/AdminDashboard.js to calculate pending bills from actual bill data
+- [ ] Add bill generation functionality (create bills for customers)
+- [ ] Test bill creation, status updates, and history viewing
+
+## Current Status
+- PaymentHistory.js screen created
+- Starting PendingBills.js modifications
