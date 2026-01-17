@@ -288,7 +288,6 @@ export default function AssignCustomers({ navigation, route }) {
             const isAssignedToSelectedStaff = item.assignedTo === selectedStaff?.id;
             const willAssign = selectedStaff && !isAssignedToSelectedStaff;
             const willUnassign = selectedStaff && isAssignedToSelectedStaff;
-            const assignedStaff = item.assignedTo ? staffMembers.find(staff => staff.id === item.assignedTo) : null;
 
             return (
               <TouchableOpacity
@@ -306,10 +305,7 @@ export default function AssignCustomers({ navigation, route }) {
                       {item.name}
                     </Text>
                     <Text style={[styles.customerSub, item.assignedTo && !isSelected && { color: '#64748b' }]}>
-                      CNIC: {item.cnic || 'N/A'}
-                    </Text>
-                    <Text style={[styles.customerSub, item.assignedTo && !isSelected && { color: '#64748b' }]}>
-                      Phone: {item.phone || 'N/A'}
+                      ID: {item.connectionNo}
                     </Text>
                     {selectedStaff && isSelected && (
                       <Text style={[styles.actionText, willAssign ? styles.assignText : styles.unassignText]}>
@@ -318,10 +314,10 @@ export default function AssignCustomers({ navigation, route }) {
                     )}
                   </View>
                 </View>
-                {item.assignedTo && assignedStaff && (
+                {item.assignedTo && (
                   <View style={[styles.badge, isAssignedToSelectedStaff && styles.selectedStaffBadge]}>
                     <Text style={[styles.badgeText, isAssignedToSelectedStaff && styles.selectedStaffBadgeText]}>
-                      Assigned to {assignedStaff.name}
+                      {isAssignedToSelectedStaff ? `Assigned to ${selectedStaff?.name}` : 'Assigned'}
                     </Text>
                   </View>
                 )}
