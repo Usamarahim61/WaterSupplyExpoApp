@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [adminCredentials, setAdminCredentials] = useState(null);
 
   const checkAdminRole = async (user) => {
     // For now, simply check if the user email is the admin email
@@ -62,6 +63,8 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     logout,
     loading,
+    adminCredentials,
+    setAdminCredentials,
   };
 
   return (

@@ -1,18 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
-  StyleSheet, Text, View, FlatList, TextInput, TouchableOpacity,
-  Modal, ScrollView, KeyboardAvoidingView, Platform, Alert, Animated, Dimensions, ActivityIndicator
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  Animated,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function ManageCustomers({ navigation }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
@@ -26,11 +46,11 @@ export default function ManageCustomers({ navigation }) {
 
   // Form State
   const [customerData, setCustomerData] = useState({
-    name: '',
-    cnic: '',
-    phone: '',
-    address: '',
-    connectionNo: '',
+    name: "",
+    cnic: "",
+    phone: "",
+    address: "",
+    connectionNo: "",
   });
 
   // Firebase Data
@@ -42,11 +62,11 @@ export default function ManageCustomers({ navigation }) {
     // Fetch customers from Firebase
     const fetchCustomers = async () => {
       try {
-        const customersCollection = collection(db, 'customers');
+        const customersCollection = collection(db, "customers");
         const unsubscribe = onSnapshot(customersCollection, (snapshot) => {
-          const customersData = snapshot.docs.map(doc => ({
+          const customersData = snapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data(),
           }));
           setCustomers(customersData);
           setLoading(false);
@@ -54,8 +74,8 @@ export default function ManageCustomers({ navigation }) {
 
         return unsubscribe;
       } catch (error) {
-        console.error('Error fetching customers:', error);
-        Alert.alert('Error', 'Failed to load customers');
+        console.error("Error fetching customers:", error);
+        Alert.alert("Error", "Failed to load customers");
         setLoading(false);
       }
     };
@@ -114,7 +134,13 @@ export default function ManageCustomers({ navigation }) {
   // Open Modal for New Entry
   const openAddModal = () => {
     setIsEditing(false);
-    setCustomerData({ name: '', cnic: '', phone: '', address: '', connectionNo: '' });
+    setCustomerData({
+      name: "",
+      cnic: "",
+      phone: "",
+      address: "",
+      connectionNo: "",
+    });
     setModalVisible(true);
     Animated.spring(modalAnim, {
       toValue: 1,
@@ -164,7 +190,7 @@ export default function ManageCustomers({ navigation }) {
     try {
       if (isEditing) {
         // Update existing customer in Firebase
-        const customerRef = doc(db, 'customers', selectedCustomerId);
+        const customerRef = doc(db, "customers", selectedCustomerId);
         await updateDoc(customerRef, {
           name: customerData.name,
           cnic: customerData.cnic,
@@ -175,22 +201,28 @@ export default function ManageCustomers({ navigation }) {
         Alert.alert("Success", "Customer updated successfully");
       } else {
         // Add new customer to Firebase
-        await addDoc(collection(db, 'customers'), {
+        await addDoc(collection(db, "customers"), {
           name: customerData.name,
           cnic: customerData.cnic,
           phone: customerData.phone,
           address: customerData.address,
           connection: customerData.connectionNo,
-          status: 'Active',
+          status: "Active",
           createdAt: new Date(),
         });
         Alert.alert("Success", "Customer added successfully");
       }
 
       closeModal();
-      setCustomerData({ name: '', cnic: '', phone: '', address: '', connectionNo: '' });
+      setCustomerData({
+        name: "",
+        cnic: "",
+        phone: "",
+        address: "",
+        connectionNo: "",
+      });
     } catch (error) {
-      console.error('Error saving customer:', error);
+      console.error("Error saving customer:", error);
       Alert.alert("Error", "Failed to save customer. Please try again.");
     }
   };
@@ -207,23 +239,27 @@ export default function ManageCustomers({ navigation }) {
           style: "destructive",
           onPress: async () => {
             try {
-              const customerRef = doc(db, 'customers', id);
+              const customerRef = doc(db, "customers", id);
               await deleteDoc(customerRef);
               Alert.alert("Success", "Customer deleted successfully");
             } catch (error) {
-              console.error('Error deleting customer:', error);
-              Alert.alert("Error", "Failed to delete customer. Please try again.");
+              console.error("Error deleting customer:", error);
+              Alert.alert(
+                "Error",
+                "Failed to delete customer. Please try again."
+              );
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   // Filter List based on Search
-  const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.connection.toLowerCase().includes(search.toLowerCase())
+  const filteredCustomers = customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.connection.toLowerCase().includes(search.toLowerCase())
   );
 
   const CustomerCard = ({ item, delay = 0 }) => {
@@ -251,12 +287,12 @@ export default function ManageCustomers({ navigation }) {
       >
         <TouchableOpacity style={styles.customerCard} activeOpacity={0.8}>
           <LinearGradient
-            colors={['#fff', '#f8fafc']}
+            colors={["#ffffff", "#f1f5f9", "#e2e8f0"]}
             style={styles.customerCardGradient}
           >
             <View style={styles.customerInfo}>
               <LinearGradient
-                colors={['#0ea5e9', '#0284c7']}
+                colors={["#0ea5e9", "#0284c7"]}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
@@ -293,9 +329,14 @@ export default function ManageCustomers({ navigation }) {
         <Ionicons name="people" size={80} color="#cbd5e1" />
       </View>
       <Text style={styles.emptyTitle}>No Customers Yet</Text>
-      <Text style={styles.emptySubtitle}>Start by adding your first customer to the system</Text>
+      <Text style={styles.emptySubtitle}>
+        Start by adding your first customer to the system
+      </Text>
       <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
-        <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.emptyButtonGradient}>
+        <LinearGradient
+          colors={["#0ea5e9", "#0284c7"]}
+          style={styles.emptyButtonGradient}
+        >
           <Ionicons name="person-add" size={20} color="#fff" />
           <Text style={styles.emptyButtonText}>Add First Customer</Text>
         </LinearGradient>
@@ -321,7 +362,10 @@ export default function ManageCustomers({ navigation }) {
           },
         ]}
       >
-        <LinearGradient colors={['rgba(14, 165, 233, 0.15)', 'rgba(56, 189, 248, 0.08)']} style={styles.waveShape} />
+        <LinearGradient
+          colors={["rgba(14, 165, 233, 0.15)", "rgba(56, 189, 248, 0.08)"]}
+          style={styles.waveShape}
+        />
       </Animated.View>
 
       <Animated.View
@@ -339,12 +383,18 @@ export default function ManageCustomers({ navigation }) {
           },
         ]}
       >
-        <LinearGradient colors={['rgba(6, 182, 212, 0.12)', 'rgba(14, 165, 233, 0.06)']} style={styles.waveShape} />
+        <LinearGradient
+          colors={["rgba(6, 182, 212, 0.12)", "rgba(14, 165, 233, 0.06)"]}
+          style={styles.waveShape}
+        />
       </Animated.View>
 
       {/* Header */}
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <LinearGradient colors={["#0ea5e9", "#0284c7"]} style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Customers</Text>
@@ -377,7 +427,7 @@ export default function ManageCustomers({ navigation }) {
           {search.length > 0 && (
             <TouchableOpacity
               style={styles.clearButton}
-              onPress={() => setSearch('')}
+              onPress={() => setSearch("")}
             >
               <Ionicons name="close-circle" size={20} color="#64748b" />
             </TouchableOpacity>
@@ -386,31 +436,52 @@ export default function ManageCustomers({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Ionicons name="people" size={24} color="#0ea5e9" />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statNumber}>{customers.length}</Text>
-              <Text style={styles.statLabel}>Total Customers</Text>
+          <LinearGradient
+            colors={["#0ea5e9", "#0284c7"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="people" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>{customers.length}</Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Total Customers</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statNumber}>
-                {customers.filter(c => c.status === 'Active').length}
-              </Text>
-              <Text style={styles.statLabel}>Active</Text>
+          </LinearGradient>
+          <LinearGradient
+            colors={["#10b981", "#059669"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>
+                  {customers.filter((c) => c.status === "Active").length}
+                </Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Active</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="time" size={24} color="#f59e0b" />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statNumber}>
-                {customers.filter(c => c.status === 'Pending').length}
-              </Text>
-              <Text style={styles.statLabel}>Pending</Text>
+          </LinearGradient>
+          <LinearGradient
+            colors={["#f59e0b", "#d97706"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="time" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>
+                  {customers.filter((c) => c.status === "Pending").length}
+                </Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Pending</Text>
+              </View>
             </View>
-          </View>
+          </LinearGradient>
         </View>
 
         {/* List */}
@@ -425,17 +496,21 @@ export default function ManageCustomers({ navigation }) {
             renderItem={({ item, index }) => (
               <CustomerCard item={item} delay={index * 100} />
             )}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={search.length > 0 ? (
-              <View style={styles.noResults}>
-                <Ionicons name="search" size={48} color="#cbd5e1" />
-                <Text style={styles.noResultsText}>No customers found</Text>
-                <Text style={styles.noResultsSubtext}>Try adjusting your search terms</Text>
-              </View>
-            ) : (
-              <EmptyState />
-            )}
+            ListEmptyComponent={
+              search.length > 0 ? (
+                <View style={styles.noResults}>
+                  <Ionicons name="search" size={48} color="#cbd5e1" />
+                  <Text style={styles.noResultsText}>No customers found</Text>
+                  <Text style={styles.noResultsSubtext}>
+                    Try adjusting your search terms
+                  </Text>
+                </View>
+              ) : (
+                <EmptyState />
+              )
+            }
             showsVerticalScrollIndicator={false}
           />
         )}
@@ -464,25 +539,36 @@ export default function ManageCustomers({ navigation }) {
               style={[
                 styles.modalContent,
                 {
-                  transform: [{
-                    translateY: modalAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [600, 0],
-                    }),
-                  }],
+                  transform: [
+                    {
+                      translateY: modalAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [600, 0],
+                      }),
+                    },
+                  ],
                 },
               ]}
             >
-              <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.modalHeader}>
+              <LinearGradient
+                colors={["#0ea5e9", "#0284c7"]}
+                style={styles.modalHeader}
+              >
                 <Text style={styles.modalTitle}>
                   {isEditing ? "Edit Customer" : "Register New Customer"}
                 </Text>
-                <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={closeModal}
+                >
                   <Ionicons name="close" size={24} color="#fff" />
                 </TouchableOpacity>
               </LinearGradient>
 
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.modalBody}
+              >
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name</Text>
                   <TextInput
@@ -490,7 +576,9 @@ export default function ManageCustomers({ navigation }) {
                     placeholder="Enter full name"
                     placeholderTextColor="#64748b"
                     value={customerData.name}
-                    onChangeText={(val) => setCustomerData({...customerData, name: val})}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, name: val })
+                    }
                   />
                 </View>
 
@@ -502,7 +590,9 @@ export default function ManageCustomers({ navigation }) {
                     placeholderTextColor="#64748b"
                     keyboardType="numeric"
                     value={customerData.cnic}
-                    onChangeText={(val) => setCustomerData({...customerData, cnic: val})}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, cnic: val })
+                    }
                   />
                 </View>
 
@@ -514,7 +604,9 @@ export default function ManageCustomers({ navigation }) {
                     placeholderTextColor="#64748b"
                     keyboardType="phone-pad"
                     value={customerData.phone}
-                    onChangeText={(val) => setCustomerData({...customerData, phone: val})}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, phone: val })
+                    }
                   />
                 </View>
 
@@ -525,7 +617,9 @@ export default function ManageCustomers({ navigation }) {
                     placeholder="e.g. W-5542"
                     placeholderTextColor="#64748b"
                     value={customerData.connectionNo}
-                    onChangeText={(val) => setCustomerData({...customerData, connectionNo: val})}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, connectionNo: val })
+                    }
                   />
                 </View>
 
@@ -538,12 +632,21 @@ export default function ManageCustomers({ navigation }) {
                     multiline
                     textAlignVertical="top"
                     value={customerData.address}
-                    onChangeText={(val) => setCustomerData({...customerData, address: val})}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, address: val })
+                    }
                   />
                 </View>
 
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSaveCustomer} activeOpacity={0.8}>
-                  <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.submitGradient}>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  onPress={handleSaveCustomer}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={["#0ea5e9", "#0284c7"]}
+                    style={styles.submitGradient}
+                  >
                     <Text style={styles.submitBtnText}>
                       {isEditing ? "Update Customer" : "Register Customer"}
                     </Text>
@@ -560,55 +663,65 @@ export default function ManageCustomers({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: "#f8fafc" },
   wave1: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: width,
     height: height * 0.3,
   },
   wave2: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: width,
     height: height * 0.25,
   },
   waveShape: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 50,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   backButton: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
+  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#fff" },
   addBtn: {
     padding: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   content: {
     flex: 1,
   },
+  flex: {
+    flexDirection: "column",
+  },
+  flexRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     margin: 20,
     borderRadius: 16,
     height: 56,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
@@ -620,41 +733,53 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#334155',
+    color: "#334155",
   },
   clearButton: {
     padding: 8,
     marginRight: 8,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginHorizontal: 20,
     marginBottom: 20,
   },
   statItem: {
-    width: '30%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: "30%",
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
     borderRadius: 16,
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    backgroundColor: '#fff',
     padding: 16,
+  },
+  statTextContainer: {
+    marginLeft: 12,
   },
 
   statNumber: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#0ea5e9',
+    fontWeight: "bold",
+    color: "#0ea5e9",
+  },
+  statNumberWhite: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
   },
   statLabel: {
     fontSize: 14,
-    color: '#64748b',
+    color: "#64748b",
+    marginTop: 4,
+  },
+  statLabelWhite: {
+    fontSize: 14,
+    color: "#fff",
     marginTop: 4,
   },
   listContainer: {
@@ -665,7 +790,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 16,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
@@ -674,35 +799,35 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
   },
-  customerInfo: { flexDirection: 'row', alignItems: 'center' },
+  customerInfo: { flexDirection: "row", alignItems: "center" },
   avatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
-  avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 22 },
+  avatarText: { color: "#fff", fontWeight: "bold", fontSize: 22 },
   customerDetails: { flex: 1 },
-  customerName: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
-  customerSub: { fontSize: 14, color: '#64748b', marginTop: 2 },
-  customerPhone: { fontSize: 14, color: '#64748b', marginTop: 2 },
-  actionButtons: { flexDirection: 'row' },
+  customerName: { fontSize: 18, fontWeight: "bold", color: "#1e293b" },
+  customerSub: { fontSize: 14, color: "#64748b", marginTop: 2 },
+  customerPhone: { fontSize: 14, color: "#64748b", marginTop: 2 },
+  actionButtons: { flexDirection: "row" },
   iconBtn: {
     padding: 12,
     borderRadius: 12,
     marginLeft: 8,
   },
   editBtn: {
-    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+    backgroundColor: "rgba(14, 165, 233, 0.1)",
   },
   deleteBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 60,
     paddingHorizontal: 40,
   },
@@ -711,64 +836,64 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1e293b',
+    fontWeight: "bold",
+    color: "#1e293b",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#64748b',
-    textAlign: 'center',
+    color: "#64748b",
+    textAlign: "center",
     marginBottom: 32,
   },
   emptyButton: {
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   emptyButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
   emptyButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
   },
   noResults: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 60,
   },
   noResultsText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: "600",
+    color: "#1e293b",
     marginTop: 16,
   },
   noResultsSubtext: {
     fontSize: 14,
-    color: '#64748b',
+    color: "#64748b",
     marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: height * 0.9,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: -2 },
@@ -780,11 +905,11 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 20,
     right: 20,
     padding: 8,
@@ -797,40 +922,40 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: "600",
+    color: "#374151",
     marginBottom: 8,
   },
   modalInput: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1f2937',
+    color: "#1f2937",
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
   },
   addressInput: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   submitBtn: {
     marginTop: 32,
     marginBottom: 20,
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   submitGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 18,
     paddingHorizontal: 24,
   },
   submitBtnText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginRight: 8,
   },
 });

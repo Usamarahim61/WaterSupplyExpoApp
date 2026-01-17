@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write customers
+    match /customers/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write staff
+    match /staff/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write users (for admin roles)
+    match /users/{document} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

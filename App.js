@@ -24,7 +24,7 @@ function AppNavigator() {
           <>
             <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
             <Stack.Screen name="ManageCustomers" component={ManageCustomers} />
-            <Stack.Screen name="ManageStaffs" component={ManageStaff} />
+            <Stack.Screen name="ManageStaff" component={ManageStaff} />
             <Stack.Screen name="AssignCustomers" component={AssignCustomers} />
           </>
         ) : (

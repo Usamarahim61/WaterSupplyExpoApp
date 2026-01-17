@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet, Text, View, FlatList, TextInput, TouchableOpacity,
-  Modal, ScrollView, KeyboardAvoidingView, Platform, Alert, Animated, Dimensions
+  Modal, ScrollView, KeyboardAvoidingView, Platform, Alert, Animated, Dimensions, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '../firebaseConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,18 +28,42 @@ export default function ManageStaff({ navigation }) {
   // Form State
   const [staffData, setStaffData] = useState({
     name: '',
+    email: '',
+    password: '',
     cnic: '',
     phone: '',
     address: '',
   });
 
-  // Sample Data
-  const [staff, setStaff] = useState([
-    { id: '1', name: 'John Doe', phone: '0300-1234567', cnic: '42101-1111111-1', address: 'House 1, Street 2' },
-    { id: '2', name: 'Sajid Khan', phone: '0312-7654321', cnic: '42101-2222222-2', address: 'Flat 402, Building B'},
-  ]);
+  // Firebase Data
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch staff from Firebase
+    const fetchStaff = async () => {
+      try {
+        const staffCollection = collection(db, "staff");
+        const unsubscribe = onSnapshot(staffCollection, (snapshot) => {
+          const staffData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setStaff(staffData);
+          setLoading(false);
+        });
+
+        return unsubscribe;
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        Alert.alert("Error", "Failed to load staff");
+        setLoading(false);
+      }
+    };
+
+    fetchStaff();
+
+    // Animation setup
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -88,7 +115,7 @@ export default function ManageStaff({ navigation }) {
   // Open Modal for New Entry
   const openAddModal = () => {
     setIsEditing(false);
-    setStaffData({ name: '', cnic: '', phone: '', address: ''});
+    setStaffData({ name: '', email: '', password: '', cnic: '', phone: '', address: '' });
     setModalVisible(true);
     Animated.spring(modalAnim, {
       toValue: 1,
@@ -104,6 +131,8 @@ export default function ManageStaff({ navigation }) {
     setSelectedStaffId(item.id);
     setStaffData({
       name: item.name,
+      email: item.email,
+      password: '', // Don't populate password for editing
       cnic: item.cnic,
       phone: item.phone,
       address: item.address,
@@ -128,34 +157,72 @@ export default function ManageStaff({ navigation }) {
   };
 
   // Handle Save (Both Create and Update)
-  const handleSaveStaff = () => {
-    if (!staffData.name) {
-      Alert.alert("Error", "Please fill in Name");
+  const handleSaveStaff = async () => {
+    if (!staffData.name || !staffData.email || (!isEditing && !staffData.password)) {
+      Alert.alert("Error", "Please fill in all required fields");
       return;
     }
 
-    if (isEditing) {
-      // Update existing
-      setStaff(staff.map(c =>
-        c.id === selectedStaffId
-        ? { ...c, ...staffData }
-        : c
-      ));
-    } else {
-      // Add new
-      const newStaff = {
-        id: Math.random().toString(),
-        ...staffData,
-      };
-      setStaff([newStaff, ...staff]);
-    }
+    try {
+      if (isEditing) {
+        // Update existing in Firestore
+        const staffRef = doc(db, "staff", selectedStaffId);
+        await updateDoc(staffRef, {
+          name: staffData.name,
+          email: staffData.email,
+          cnic: staffData.cnic,
+          phone: staffData.phone,
+          address: staffData.address,
+        });
+        Alert.alert("Success", "Staff updated successfully");
+      } else {
+        // Store current admin credentials before creating staff user
+        const currentUser = auth.currentUser;
+        let adminEmail = null;
+        let adminPassword = null;
 
-    closeModal();
-    setStaffData({ name: '', cnic: '', phone: '', address: '' });
+        if (currentUser && currentUser.email === 'usamarahim61@gmail.com') {
+          // This is the admin, we need to sign them back in after creating staff
+          adminEmail = currentUser.email;
+          // We don't have the password stored, so we'll need to handle this differently
+          // For now, let's create the staff user and then try to sign back in the admin
+        }
+
+        // Create Firebase Auth user for staff
+        const userCredential = await createUserWithEmailAndPassword(auth, staffData.email, staffData.password);
+        const uid = userCredential.user.uid;
+
+        // Save to Firestore
+        await addDoc(collection(db, "staff"), {
+          name: staffData.name,
+          email: staffData.email,
+          cnic: staffData.cnic,
+          phone: staffData.phone,
+          address: staffData.address,
+          uid: uid,
+          role: 'staff', // Assuming role is staff
+          status: 'Active',
+          createdAt: new Date(),
+        });
+
+        // If admin was logged in, we need to sign them back in
+        // Since we don't have the admin password stored, we'll need to handle this differently
+        // For now, the admin will be signed out and need to log back in manually
+        // This is a security measure to prevent automatic re-authentication
+
+        Alert.alert("Success", "Staff registered successfully. Please log back in as admin.");
+      }
+
+      closeModal();
+      setStaffData({ name: '', email: '', password: '', cnic: '', phone: '', address: '' });
+    } catch (error) {
+      console.error("Error saving staff:", error);
+      Alert.alert("Error", error.message);
+    }
   };
 
   // Handle Delete
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     Alert.alert(
       "Delete Staff",
       "Are you sure you want to remove this staff record?",
@@ -164,7 +231,16 @@ export default function ManageStaff({ navigation }) {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => setStaff(staff.filter(c => c.id !== id))
+          onPress: async () => {
+            try {
+              const staffRef = doc(db, "staff", id);
+              await deleteDoc(staffRef);
+              Alert.alert("Success", "Staff deleted successfully");
+            } catch (error) {
+              console.error("Error deleting staff:", error);
+              Alert.alert("Error", "Failed to delete staff. Please try again.");
+            }
+          },
         }
       ]
     );
@@ -173,7 +249,7 @@ export default function ManageStaff({ navigation }) {
   // Filter List based on Search
   const filteredStaff = staff.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.cnic.toLowerCase().includes(search.toLowerCase())
+    c.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const StaffCard = ({ item, delay = 0 }) => {
@@ -213,7 +289,7 @@ export default function ManageStaff({ navigation }) {
               </LinearGradient>
               <View style={styles.staffDetails}>
                 <Text style={styles.staffName}>{item.name}</Text>
-                <Text style={styles.staffSub}>CNIC: {item.cnic}</Text>
+                <Text style={styles.staffSub}>{item.email}</Text>
                 <Text style={styles.staffPhone}>{item.phone}</Text>
               </View>
             </View>
@@ -293,7 +369,7 @@ export default function ManageStaff({ navigation }) {
       </Animated.View>
 
       {/* Header */}
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.header}>
+      <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
@@ -318,7 +394,7 @@ export default function ManageStaff({ navigation }) {
             <Ionicons name="search" size={20} color="#64748b" />
           </View>
           <TextInput
-            placeholder="Search by Name or CNIC"
+            placeholder="Search by Name or Email"
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
@@ -336,10 +412,52 @@ export default function ManageStaff({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{staff.length}</Text>
-            <Text style={styles.statLabel}>Total Staff</Text>
-          </View>
+          <LinearGradient
+            colors={["#0ea5e9", "#0284c7"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="people" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>{staff.length}</Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Total Staff</Text>
+              </View>
+            </View>
+          </LinearGradient>
+          <LinearGradient
+            colors={["#10b981", "#059669"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>
+                  {staff.filter((s) => s.status === "Active").length}
+                </Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Active</Text>
+              </View>
+            </View>
+          </LinearGradient>
+          <LinearGradient
+            colors={["#f59e0b", "#d97706"]}
+            style={styles.statItem}
+          >
+            <View style={styles.flex}>
+              <View style={styles.flexRow}>
+                <Ionicons name="time" size={24} color="#fff" />
+                <Text style={styles.statNumberWhite}>
+                  {staff.filter((s) => s.status === "Pending").length}
+                </Text>
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statLabelWhite}>Pending</Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* List */}
@@ -415,6 +533,33 @@ export default function ManageStaff({ navigation }) {
                     onChangeText={(val) => setStaffData({...staffData, name: val})}
                   />
                 </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="staff@example.com"
+                    placeholderTextColor="#64748b"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={staffData.email}
+                    onChangeText={(val) => setStaffData({...staffData, email: val})}
+                  />
+                </View>
+
+                {!isEditing && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Password</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="Enter password"
+                      placeholderTextColor="#64748b"
+                      secureTextEntry
+                      value={staffData.password}
+                      onChangeText={(val) => setStaffData({...staffData, password: val})}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>CNIC Number</Text>
@@ -511,6 +656,27 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  flex: {
+    flexDirection: "column",
+  },
+  flexRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statTextContainer: {
+    marginLeft: 12,
+  },
+  statNumberWhite: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  statLabelWhite: {
+    fontSize: 14,
+    color: "#fff",
+    marginTop: 4,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -539,7 +705,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: "space-between",
     marginHorizontal: 20,
     marginBottom: 20,
   },
