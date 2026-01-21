@@ -305,7 +305,13 @@ export default function AssignCustomers({ navigation, route }) {
                       {item.name}
                     </Text>
                     <Text style={[styles.customerSub, item.assignedTo && !isSelected && { color: '#64748b' }]}>
-                      ID: {item.connectionNo}
+                      ID: {item.connection}
+                    </Text>
+                      <Text style={[styles.customerSub, item.assignedTo && !isSelected && { color: '#64748b' }]}>
+                      CNIC: {item.cnic}
+                    </Text>
+                    <Text style={[styles.customerSub, item.assignedTo && !isSelected && { color: '#64748b' }]}>
+                      Phone No: {item.phone}
                     </Text>
                     {selectedStaff && isSelected && (
                       <Text style={[styles.actionText, willAssign ? styles.assignText : styles.unassignText]}>
