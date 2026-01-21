@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebaseConfig.js';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from './firebaseConfig.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
@@ -12,27 +13,47 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [loading, setLoading] = useState(true);
   const [adminCredentials, setAdminCredentials] = useState(null);
 
-  const checkAdminRole = async (user) => {
-    // For now, simply check if the user email is the admin email
-    // This avoids Firestore permission issues entirely
+  const checkUserRole = async (user) => {
+    // Check if user is admin
     const isAdminUser = user.email === 'usamarahim61@gmail.com';
-    console.log('Checking admin role for:', user, 'Is admin:', isAdminUser);
-    return isAdminUser;
+
+    // Check if user is staff
+    let isStaffUser = false;
+    try {
+      const staffQuery = query(
+        collection(db, "staff"),
+        where("email", "==", user.email)
+      );
+      const staffSnapshot = await getDocs(staffQuery);
+      isStaffUser = !staffSnapshot.empty;
+    } catch (error) {
+      console.error('Error checking staff role:', error);
+    }
+
+    console.log('Checking roles for:', user.email, 'Is admin:', isAdminUser, 'Is staff:', isStaffUser);
+    return { isAdmin: isAdminUser, isStaff: isStaffUser };
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const adminStatus = await checkAdminRole(user);
+        const { isAdmin: adminStatus, isStaff: staffStatus } = await checkUserRole(user);
         setUser(user);
         setIsAdmin(adminStatus);
-        await AsyncStorage.setItem('user', JSON.stringify({ ...user, isAdmin: adminStatus }));
+        setIsStaff(staffStatus);
+        await AsyncStorage.setItem('user', JSON.stringify({
+          ...user,
+          isAdmin: adminStatus,
+          isStaff: staffStatus
+        }));
       } else {
         setUser(null);
         setIsAdmin(false);
+        setIsStaff(false);
         await AsyncStorage.removeItem('user');
       }
       setLoading(false);
@@ -45,6 +66,7 @@ export const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setIsAdmin(parsedUser.isAdmin || false);
+        setIsStaff(parsedUser.isStaff || false);
       }
       setLoading(false);
     };
@@ -61,6 +83,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     isAdmin,
+    isStaff,
     logout,
     loading,
     adminCredentials,

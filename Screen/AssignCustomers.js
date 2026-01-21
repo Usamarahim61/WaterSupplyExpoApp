@@ -76,7 +76,7 @@ export default function AssignCustomers({ navigation, route }) {
   // Show modal when staff is pre-selected and customers are loaded
   useEffect(() => {
     if (selectedStaff && customers.length > 0 && route.params?.selectedStaff) {
-      const assigned = customers.filter(customer => customer.assignedTo === selectedStaff.id);
+      const assigned = customers.filter(customer => customer.assignedTo === selectedStaff.uid);
       setAssignedCustomers(assigned);
       setModalVisible(true);
     }
@@ -120,7 +120,7 @@ export default function AssignCustomers({ navigation, route }) {
       selectedCustomers.forEach(customerId => {
         const customer = customers.find(c => c.id === customerId);
         if (customer) {
-          if (customer.assignedTo === selectedStaff.id) {
+          if (customer.assignedTo === selectedStaff.uid) {
             // Customer is already assigned to this staff, unassign them
             unassignOperations.push(customerId);
           } else {
@@ -134,7 +134,7 @@ export default function AssignCustomers({ navigation, route }) {
       const assignPromises = assignOperations.map(async (customerId) => {
         const customerRef = doc(db, "customers", customerId);
         await updateDoc(customerRef, {
-          assignedTo: selectedStaff.id,
+          assignedTo: selectedStaff.uid,
         });
       });
 

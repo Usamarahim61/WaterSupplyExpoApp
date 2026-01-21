@@ -249,14 +249,14 @@ export default function AdminDashboard({ navigation }) {
             />
             <StatCard
               title="Pending Bills"
-              value={`Rs.${pendingBills.toLocaleString()}`}
+              value={`Rs.${bills.filter(bill => bill.status === 'pending' || bill.status === 'not paid').reduce((sum, bill) => sum + bill.amount, 0).toLocaleString()}`}
               icon="document-text"
               gradient={['#f59e0b', '#d97706']}
               onPress={() => navigation.navigate('PendingBills')}
             />
             <StatCard
               title="Revenue"
-              value="Rs.4,200"
+              value={`Rs.${bills.filter(bill => bill.status === 'paid').reduce((sum, bill) => sum + bill.amount, 0).toLocaleString()}`}
               icon="cash"
               gradient={['#10b981', '#059669']}
               onPress={() => navigation.navigate('ManageCustomers')}

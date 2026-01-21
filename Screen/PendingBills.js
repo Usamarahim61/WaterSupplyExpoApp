@@ -16,6 +16,14 @@ export default function PendingBills({ navigation }) {
   const [newPrice, setNewPrice] = useState('');
 
   useEffect(() => {
+    if (!navigation) {
+      // Clear all data when user logs out
+      setCustomers([]);
+      setBills([]);
+      setLoading(false);
+      return;
+    }
+
     // Fetch customers data
     const customersCollection = collection(db, "customers");
     const customersUnsubscribe = onSnapshot(customersCollection, (snapshot) => {
@@ -41,7 +49,7 @@ export default function PendingBills({ navigation }) {
       customersUnsubscribe();
       billsUnsubscribe();
     };
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
     const settingsCollection = collection(db, "settings");
