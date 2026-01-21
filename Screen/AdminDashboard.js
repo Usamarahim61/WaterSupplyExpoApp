@@ -268,19 +268,19 @@ export default function AdminDashboard({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
           <View style={styles.actionsContainer}>
-            <ActionCard
+            {/* <ActionCard
               icon="person-add"
               title="Add Customer"
               subtitle="Register new customer"
               color="#0ea5e9"
-            />
-            <ActionCard
+            /> */}
+            {/* <ActionCard
               icon="people"
               title="Manage Staff"
               subtitle="Add, edit, and manage staff"
               onPress={() => handleNavigation('ManageStaff')}
               color="#06b6d4"
-            />
+            /> */}
             <ActionCard
               icon="receipt"
               title="Generate Bills"
@@ -322,7 +322,7 @@ export default function AdminDashboard({ navigation }) {
         </View>
 
         {/* Recent Activity */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>📋 Recent Activity</Text>
           <View style={styles.activityContainer}>
             <View style={styles.activityItem}>
@@ -353,7 +353,7 @@ export default function AdminDashboard({ navigation }) {
               </View>
             </View>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Modal for Assigned Customers */}

@@ -10,6 +10,7 @@ import ManageStaff from './Screen/ManageStaff';
 import AssignCustomers from './Screen/AssignCustomers';
 import PendingBills from './Screen/PendingBills';
 import PaymentHistory from './Screen/PaymentHistory';
+import CustomerBillStatement from './Screen/CustomerBillStatement';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,7 @@ function AppNavigator() {
               <Stack.Screen name="AssignCustomers" component={AssignCustomers} />
               <Stack.Screen name="PendingBills" component={PendingBills} />
               <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
+              <Stack.Screen name="CustomerBillStatement" component={CustomerBillStatement} />
             </>
           ) : isStaff ? (
             // Staff screens

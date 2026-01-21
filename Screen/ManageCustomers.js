@@ -47,6 +47,7 @@ export default function ManageCustomers({ navigation }) {
   // Form State
   const [customerData, setCustomerData] = useState({
     name: "",
+    email: "",
     cnic: "",
     phone: "",
     address: "",
@@ -136,6 +137,7 @@ export default function ManageCustomers({ navigation }) {
     setIsEditing(false);
     setCustomerData({
       name: "",
+      email: "",
       cnic: "",
       phone: "",
       address: "",
@@ -193,6 +195,7 @@ export default function ManageCustomers({ navigation }) {
         const customerRef = doc(db, "customers", selectedCustomerId);
         await updateDoc(customerRef, {
           name: customerData.name,
+          email: customerData.email,
           cnic: customerData.cnic,
           phone: customerData.phone,
           address: customerData.address,
@@ -203,6 +206,7 @@ export default function ManageCustomers({ navigation }) {
         // Add new customer to Firebase
         await addDoc(collection(db, "customers"), {
           name: customerData.name,
+          email: customerData.email,
           cnic: customerData.cnic,
           phone: customerData.phone,
           address: customerData.address,
@@ -216,6 +220,7 @@ export default function ManageCustomers({ navigation }) {
       closeModal();
       setCustomerData({
         name: "",
+        email: "",
         cnic: "",
         phone: "",
         address: "",
@@ -259,6 +264,7 @@ export default function ManageCustomers({ navigation }) {
   const filteredCustomers = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase()) ||
       c.connection.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -300,10 +306,17 @@ export default function ManageCustomers({ navigation }) {
               <View style={styles.customerDetails}>
                 <Text style={styles.customerName}>{item.name}</Text>
                 <Text style={styles.customerSub}>ID: {item.connection}</Text>
+                <Text style={styles.customerEmail}>{item.email}</Text>
                 <Text style={styles.customerPhone}>{item.phone}</Text>
               </View>
             </View>
             <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.iconBtn, styles.viewBtn]}
+                onPress={() => navigation.navigate('CustomerBillStatement', { customer: item })}
+              >
+                <Ionicons name="receipt-outline" size={20} color="#10b981" />
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, styles.editBtn]}
                 onPress={() => openEditModal(item)}
@@ -583,6 +596,21 @@ export default function ManageCustomers({ navigation }) {
                 </View>
 
                 <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="customer@example.com"
+                    placeholderTextColor="#64748b"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={customerData.email}
+                    onChangeText={(val) =>
+                      setCustomerData({ ...customerData, email: val })
+                    }
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>CNIC Number</Text>
                   <TextInput
                     style={styles.modalInput}
@@ -818,6 +846,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginLeft: 8,
+  },
+  viewBtn: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
   },
   editBtn: {
     backgroundColor: "rgba(14, 165, 233, 0.1)",
