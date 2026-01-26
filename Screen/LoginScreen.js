@@ -146,7 +146,7 @@ export default function LoginScreen({ navigation }) {
           },
         ]}
       >
-        <LinearGradient colors={['#0ea5e9', '#0284c7', '#06b6d4']} style={styles.headerGradient}>
+        <LinearGradient colors={['#0047AB', '#0047AB', '#0284c7']} style={styles.headerGradient}>
           <SafeAreaView style={styles.logoContainer}>
             <Animated.View
               style={[
@@ -158,7 +158,7 @@ export default function LoginScreen({ navigation }) {
             >
               <Ionicons name="water" size={50} color="#fff" />
             </Animated.View>
-            <Text style={styles.headerTitle}>🌊 WaterFlow Admin</Text>
+            <Text style={styles.headerTitle}>Water Supply</Text>
             <Text style={styles.headerSubtitle}>
               Smart Water Supply Management System
             </Text>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   headerBackground: { height: '40%', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   logoContainer: { alignItems: 'center' },
-  logoBox: { backgroundColor: '#3498db', padding: 15, borderRadius: 20, marginBottom: 20 },
+  logoBox: { backgroundColor: '#0047AB', padding: 15, borderRadius: 20, marginBottom: 20 },
   headerTitle: { fontSize: 26, fontWeight: 'bold', color: 'white', marginBottom: 10 },
   headerSubtitle: { color: 'rgba(255,255,255,0.7)', textAlign: 'center', fontSize: 14 },
   
@@ -271,15 +271,15 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, height: '100%' },
-  forgotText: { textAlign: 'right', color: '#3498db', fontWeight: '600', marginBottom: 30 },
+  forgotText: { textAlign: 'right', color: '#0047AB', fontWeight: '600', marginBottom: 30 },
   
   loginButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#0047AB',
     height: 55,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#3498db',
+    shadowColor: '#0047AB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: { color: '#333', fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
-  signUpText: { color: '#3498db', fontWeight: 'bold' },
+  signUpText: { color: '#0047AB', fontWeight: 'bold' },
 loginGradient:{
   flexDirection: 'row'
 },

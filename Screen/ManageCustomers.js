@@ -298,7 +298,7 @@ export default function ManageCustomers({ navigation }) {
           >
             <View style={styles.customerInfo}>
               <LinearGradient
-                colors={["#0ea5e9", "#0284c7"]}
+                colors={["#0047AB", "#0284c7"]}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
@@ -321,7 +321,7 @@ export default function ManageCustomers({ navigation }) {
                 style={[styles.iconBtn, styles.editBtn]}
                 onPress={() => openEditModal(item)}
               >
-                <Ionicons name="create-outline" size={20} color="#0ea5e9" />
+                <Ionicons name="create-outline" size={20} color="#0047AB" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, styles.deleteBtn]}
@@ -347,7 +347,7 @@ export default function ManageCustomers({ navigation }) {
       </Text>
       <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
         <LinearGradient
-          colors={["#0ea5e9", "#0284c7"]}
+          colors={["#0047AB", "#0284c7"]}
           style={styles.emptyButtonGradient}
         >
           <Ionicons name="person-add" size={20} color="#fff" />
@@ -403,7 +403,7 @@ export default function ManageCustomers({ navigation }) {
       </Animated.View>
 
       {/* Header */}
-      <LinearGradient colors={["#0ea5e9", "#0284c7"]} style={styles.header}>
+      <LinearGradient colors={["#0047AB", "#0284c7"]} style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -450,7 +450,7 @@ export default function ManageCustomers({ navigation }) {
         {/* Stats */}
         <View style={styles.statsContainer}>
           <LinearGradient
-            colors={["#0ea5e9", "#0284c7"]}
+            colors={["#0047AB", "#0284c7"]}
             style={styles.statItem}
           >
             <View style={styles.flex}>
@@ -500,7 +500,7 @@ export default function ManageCustomers({ navigation }) {
         {/* List */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0ea5e9" />
+            <ActivityIndicator size="large" color="#0047AB" />
             <Text style={styles.loadingText}>Loading customers...</Text>
           </View>
         ) : (
@@ -564,7 +564,7 @@ export default function ManageCustomers({ navigation }) {
               ]}
             >
               <LinearGradient
-                colors={["#0ea5e9", "#0284c7"]}
+                colors={["#0047AB", "#0284c7"]}
                 style={styles.modalHeader}
               >
                 <Text style={styles.modalTitle}>
@@ -672,7 +672,7 @@ export default function ManageCustomers({ navigation }) {
                   activeOpacity={0.8}
                 >
                   <LinearGradient
-                    colors={["#0ea5e9", "#0284c7"]}
+                    colors={["#0047AB", "#0284c7"]}
                     style={styles.submitGradient}
                   >
                     <Text style={styles.submitBtnText}>
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#0ea5e9",
+    color: "#0047AB",
   },
   statNumberWhite: {
     fontSize: 28,

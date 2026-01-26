@@ -140,7 +140,7 @@ export default function CustomerBillStatement({ navigation, route }) {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.header}>
+      <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -175,7 +175,7 @@ export default function CustomerBillStatement({ navigation, route }) {
       {/* Bills List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0ea5e9" />
+          <ActivityIndicator size="large" color="#0047AB" />
           <Text style={styles.loadingText}>Loading bill statement...</Text>
         </View>
       ) : bills.length > 0 ? (
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   monthContainer: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,

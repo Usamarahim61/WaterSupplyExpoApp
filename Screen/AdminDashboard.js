@@ -167,7 +167,7 @@ export default function AdminDashboard({ navigation }) {
     );
   };
 
-  const ActionCard = ({ icon, title, subtitle, onPress, color = '#0ea5e9', delay = 0 }) => {
+  const ActionCard = ({ icon, title, subtitle, onPress, color = '#0047AB', delay = 0 }) => {
     return (
       <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.7}>
         <View style={[styles.actionIconContainer, { backgroundColor: color + '20' }]}>
@@ -197,7 +197,7 @@ export default function AdminDashboard({ navigation }) {
       >
         <LinearGradient colors={['#fff', '#f8fafc']} style={styles.assignmentCardGradient}>
           <View style={styles.assignmentHeader}>
-            <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.staffAvatar}>
+            <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.staffAvatar}>
               <Text style={styles.staffAvatarText}>{item.name.charAt(0)}</Text>
             </LinearGradient>
             <View style={styles.assignmentInfo}>
@@ -216,7 +216,7 @@ export default function AdminDashboard({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.headerGradient}>
+          <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.headerGradient}>
             <View style={styles.headerContent}>
               <View>
                 <Text style={styles.headerTitle}>🌊 WaterFlow Admin</Text>
@@ -237,7 +237,7 @@ export default function AdminDashboard({ navigation }) {
               title="Total Customers"
               value={customers.length.toString()}
               icon="people"
-              gradient={['#0ea5e9', '#0284c7']}
+              gradient={['#0047AB', '#0284c7']}
               onPress={() => handleNavigation('ManageCustomers')}
             />
             <StatCard
@@ -272,7 +272,7 @@ export default function AdminDashboard({ navigation }) {
               icon="person-add"
               title="Add Customer"
               subtitle="Register new customer"
-              color="#0ea5e9"
+              color="#0047AB"
             /> */}
             {/* <ActionCard
               icon="people"
@@ -336,7 +336,7 @@ export default function AdminDashboard({ navigation }) {
             </View>
             <View style={styles.activityItem}>
               <View style={styles.activityIcon}>
-                <Ionicons name="receipt" size={20} color="#0ea5e9" />
+                <Ionicons name="receipt" size={20} color="#0047AB" />
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityTitle}>Monthly bills generated</Text>
@@ -380,7 +380,7 @@ export default function AdminDashboard({ navigation }) {
               {selectedStaffCustomers && selectedStaffCustomers.length > 0 ? (
                 selectedStaffCustomers.map((customer) => (
                   <View key={customer.id} style={styles.customerItem}>
-                    <Ionicons name="person" size={16} color="#0ea5e9" />
+                    <Ionicons name="person" size={16} color="#0047AB" />
                     <Text style={styles.customerName}>{customer.name}</Text>
                     <Text style={styles.customerId}>ID: {customer.connectionNo}</Text>
                   </View>
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     elevation: 8,
-    shadowColor: '#0ea5e9',
+    shadowColor: '#0047AB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

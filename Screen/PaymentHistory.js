@@ -122,7 +122,7 @@ export default function PaymentHistory({ navigation, route }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#0ea5e9" />
+        <ActivityIndicator size="large" color="#0047AB" />
       </SafeAreaView>
     );
   }
@@ -131,7 +131,7 @@ export default function PaymentHistory({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0ea5e9" />
+          <Ionicons name="arrow-back" size={24} color="#0047AB" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Payment History</Text>
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   statusButton: {
     marginTop: 12,
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,

@@ -166,7 +166,7 @@ export default function PendingBills({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#0ea5e9" />
+        <ActivityIndicator size="large" color="#0047AB" />
       </SafeAreaView>
     );
   }
@@ -175,11 +175,11 @@ export default function PendingBills({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0ea5e9" />
+          <Ionicons name="arrow-back" size={24} color="#0047AB" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pending Bills</Text>
         <TouchableOpacity onPress={() => setEditModalVisible(true)} style={styles.editButton}>
-          <Ionicons name="pencil" size={24} color="#0ea5e9" />
+          <Ionicons name="pencil" size={24} color="#0047AB" />
         </TouchableOpacity>
       </View>
 
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   },
   historyButton: {
     marginTop: 8,
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
   },
   saveButton: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
   },
   cancelButtonText: {
     color: '#64748b',

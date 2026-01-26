@@ -161,7 +161,7 @@ export default function StaffDashboard({ navigation }) {
       <View style={styles.customerCard}>
         <LinearGradient colors={['#ffffff', '#f1f5f9']} style={styles.customerCardGradient}>
           <View style={styles.customerHeader}>
-            <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.customerAvatar}>
+            <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.customerAvatar}>
               <Text style={styles.customerAvatarText}>{item.name.charAt(0)}</Text>
             </LinearGradient>
             <View style={styles.customerInfo}>
@@ -221,7 +221,7 @@ export default function StaffDashboard({ navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0ea5e9" />
+        <ActivityIndicator size="large" color="#0047AB" />
       </View>
     );
   }
@@ -237,7 +237,7 @@ export default function StaffDashboard({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.headerGradient}>
+          <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.headerGradient}>
             <View style={styles.headerContent}>
               <View>
                 <Text style={styles.headerTitle}>👷 Staff Dashboard</Text>
@@ -260,7 +260,7 @@ export default function StaffDashboard({ navigation }) {
               title="Assigned Customers"
               value={totalAssigned.toString()}
               icon="people"
-              gradient={['#0ea5e9', '#0284c7']}
+              gradient={['#0047AB', '#0284c7']}
             />
             <StatCard
               title="Revenue"
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     elevation: 8,
-    shadowColor: '#0ea5e9',
+    shadowColor: '#0047AB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

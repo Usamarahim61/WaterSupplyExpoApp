@@ -282,7 +282,7 @@ export default function ManageStaff({ navigation }) {
           >
             <View style={styles.staffInfo}>
               <LinearGradient
-                colors={['#0ea5e9', '#0284c7']}
+                colors={['#0047AB', '#0284c7']}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
@@ -298,7 +298,7 @@ export default function ManageStaff({ navigation }) {
                 style={[styles.iconBtn, styles.editBtn]}
                 onPress={() => openEditModal(item)}
               >
-                <Ionicons name="create-outline" size={20} color="#0ea5e9" />
+                <Ionicons name="create-outline" size={20} color="#0047AB" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, styles.deleteBtn]}
@@ -321,7 +321,7 @@ export default function ManageStaff({ navigation }) {
       <Text style={styles.emptyTitle}>No Staff Yet</Text>
       <Text style={styles.emptySubtitle}>Start by adding your first staff member to the system</Text>
       <TouchableOpacity style={styles.emptyButton} onPress={openAddModal}>
-        <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.emptyButtonGradient}>
+        <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.emptyButtonGradient}>
           <Ionicons name="person-add" size={20} color="#fff" />
           <Text style={styles.emptyButtonText}>Add First Staff</Text>
         </LinearGradient>
@@ -369,7 +369,7 @@ export default function ManageStaff({ navigation }) {
       </Animated.View>
 
       {/* Header */}
-      <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.header}>
+      <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
@@ -413,7 +413,7 @@ export default function ManageStaff({ navigation }) {
         {/* Stats */}
         <View style={styles.statsContainer}>
           <LinearGradient
-            colors={["#0ea5e9", "#0284c7"]}
+            colors={["#0047AB", "#0284c7"]}
             style={styles.statItem}
           >
             <View style={styles.flex}>
@@ -513,7 +513,7 @@ export default function ManageStaff({ navigation }) {
                 },
               ]}
             >
-              <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.modalHeader}>
+              <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
                   {isEditing ? "Edit Staff" : "Register New Staff"}
                 </Text>
@@ -599,7 +599,7 @@ export default function ManageStaff({ navigation }) {
                 </View>
 
                 <TouchableOpacity style={styles.submitBtn} onPress={handleSaveStaff} activeOpacity={0.8}>
-                  <LinearGradient colors={['#0ea5e9', '#0284c7']} style={styles.submitGradient}>
+                  <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.submitGradient}>
                     <Text style={styles.submitBtnText}>
                       {isEditing ? "Update Staff" : "Register Staff"}
                     </Text>
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#0ea5e9',
+    color: '#0047AB',
   },
   statLabel: {
     fontSize: 14,

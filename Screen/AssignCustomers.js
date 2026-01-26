@@ -3,6 +3,7 @@ import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator, Modal, ScrollView, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   collection,
   getDocs,
@@ -183,11 +184,15 @@ export default function AssignCustomers({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Assign Customers</Text>
-        <View style={{ width: 24 }} />
+        <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.headerGradient}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>👥 Assign Customers</Text>
+            <View style={{ width: 24 }} />
+          </View>
+        </LinearGradient>
       </View>
 
       {/* Step 1: Select Staff */}
@@ -323,7 +328,10 @@ export default function AssignCustomers({ navigation, route }) {
                 {item.assignedTo && (
                   <View style={[styles.badge, isAssignedToSelectedStaff && styles.selectedStaffBadge]}>
                     <Text style={[styles.badgeText, isAssignedToSelectedStaff && styles.selectedStaffBadgeText]}>
-                      {isAssignedToSelectedStaff ? `Assigned to ${selectedStaff?.name}` : 'Assigned'}
+                      {(() => {
+                        const assignedStaff = staffMembers.find(staff => staff.id === item.assignedTo);
+                        return assignedStaff ? `Assigned to ${assignedStaff.name}` : 'Assigned';
+                      })()}
                     </Text>
                   </View>
                 )}
@@ -367,7 +375,7 @@ export default function AssignCustomers({ navigation, route }) {
                     const assignedStaff = staffMembers.find(staff => staff.id === customer.assignedTo);
                     return (
                       <View key={customer.id} style={styles.customerItem}>
-                        <Ionicons name="person" size={16} color="#0ea5e9" />
+                        <Ionicons name="person" size={16} color="#0047AB" />
                         <View style={styles.customerDetails}>
                           <Text style={styles.customerName}>{customer.name}</Text>
                           <Text style={styles.customerInfo}>CNIC: {customer.cnic || 'N/A'}</Text>
@@ -395,49 +403,153 @@ export default function AssignCustomers({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FD' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#fff' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
-  
-  section: { padding: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 15, color: '#555' },
-  
-  staffCard: { 
-    backgroundColor: '#fff', 
-    padding: 15, 
-    borderRadius: 15, 
-    marginRight: 10, 
-    alignItems: 'center', 
-    width: 110,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E0E0E0'
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
   },
-  activeStaff: { backgroundColor: '#0047AB', borderColor: '#0047AB' },
-  staffName: { marginTop: 8, fontSize: 12, fontWeight: 'bold', color: '#333' },
-
-  customerRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  header: {
+    marginTop: 50,
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  headerGradient: {
+    borderRadius: 20,
+    padding: 20,
+    elevation: 8,
+    shadowColor: '#0047AB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fff', 
-    padding: 15, 
-    borderRadius: 12, 
-    marginBottom: 10,
-    elevation: 1
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+
+  section: {
+    marginHorizontal: 20,
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+
+  staffCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    width: 120,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  activeStaff: {
+    backgroundColor: '#0047AB',
+    borderColor: '#0047AB',
+    transform: [{ scale: 1.05 }],
+  },
+  staffName: {
+    marginTop: 10,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1e293b',
+    textAlign: 'center',
+  },
+
+  customerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   customerInfo: { flexDirection: 'row', alignItems: 'center' },
-  customerName: { fontWeight: 'bold', fontSize: 15 },
-  customerSub: { fontSize: 12, color: '#888' },
-  
-  badge: { backgroundColor: '#E3F2FD', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 5 },
-  badgeText: { fontSize: 10, color: '#0047AB', fontWeight: 'bold' },
+  customerName: {
+    fontWeight: '700',
+    fontSize: 16,
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  customerSub: {
+    fontSize: 13,
+    color: '#64748b',
+    lineHeight: 18,
+  },
 
-  footer: { padding: 20, backgroundColor: '#fff' },
-  assignBtn: { backgroundColor: '#0047AB', padding: 18, borderRadius: 15, alignItems: 'center' },
-  assignBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
+  badge: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  badgeText: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+
+  footer: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  assignBtn: {
+    backgroundColor: '#0047AB',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#0047AB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  assignBtnText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 17,
+    letterSpacing: 0.5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 17,
+    color: '#64748b',
+    fontWeight: '500',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -541,8 +653,8 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   activeFilter: {
-    backgroundColor: '#0ea5e9',
-    borderColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
+    borderColor: '#0047AB',
   },
   filterText: {
     fontSize: 12,
@@ -559,7 +671,7 @@ const styles = StyleSheet.create({
   },
   bulkButton: {
     flex: 1,
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -590,7 +702,7 @@ const styles = StyleSheet.create({
     color: '#ef4444',
   },
   selectedStaffBadge: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#0047AB',
   },
   selectedStaffBadgeText: {
     color: '#fff',
