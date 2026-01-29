@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView, Dimensions, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView, Dimensions, SafeAreaView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { useAuth } from '../AuthContext';
-import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -22,6 +22,8 @@ export default function AdminDashboard({ navigation }) {
   const [selectedStaffName, setSelectedStaffName] = useState('');
   const [pendingBills, setPendingBills] = useState(0);
   const [fixedPrice, setFixedPrice] = useState(1000);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [newPrice, setNewPrice] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -156,6 +158,36 @@ export default function AdminDashboard({ navigation }) {
         }
       ]
     );
+  };
+
+  const saveNewPrice = async () => {
+    const price = parseFloat(newPrice);
+    if (isNaN(price) || price <= 0) {
+      Alert.alert('Invalid Price', 'Please enter a valid price greater than 0.');
+      return;
+    }
+
+    try {
+      const settingsRef = collection(db, "settings");
+      const settingsSnapshot = await getDocs(settingsRef);
+
+      if (!settingsSnapshot.empty) {
+        // Update existing settings document
+        const settingsDoc = settingsSnapshot.docs[0];
+        await updateDoc(settingsDoc.ref, { fixedPrice: price });
+      } else {
+        // Create new settings document
+        await addDoc(settingsRef, { fixedPrice: price });
+      }
+
+      setFixedPrice(price);
+      setEditModalVisible(false);
+      setNewPrice('');
+      Alert.alert('Success', 'Fixed price updated successfully.');
+    } catch (error) {
+      console.error('Error updating price:', error);
+      Alert.alert('Error', 'Failed to update price. Please try again.');
+    }
   };
 
   const StatCard = ({ title, value, icon, gradient, onPress, delay = 0 }) => {
@@ -302,6 +334,13 @@ export default function AdminDashboard({ navigation }) {
               onPress={() => handleNavigation('AssignCustomers')}
               color="#f59e0b"
             />
+            <ActionCard
+              icon="pencil"
+              title="Edit Fixed Price"
+              subtitle={`Current: Rs.${fixedPrice}`}
+              onPress={() => setEditModalVisible(true)}
+              color="#8b5cf6"
+            />
             {/* <ActionCard
               icon="analytics"
               title="Reports"
@@ -404,6 +443,53 @@ export default function AdminDashboard({ navigation }) {
                 <Text style={styles.noCustomers}>No customers assigned</Text>
               )}
             </RNScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Price Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Fixed Price</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.modalLabel}>Current Price: Rs.{fixedPrice}</Text>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="Enter new price"
+                value={newPrice}
+                onChangeText={setNewPrice}
+                keyboardType="numeric"
+                placeholderTextColor="#64748b"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setEditModalVisible(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={saveNewPrice}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
@@ -731,5 +817,47 @@ const styles = StyleSheet.create({
   modalBody: {
     padding: 20,
     maxHeight: 400,
+  },
+  modalLabel: {
+    fontSize: 16,
+    color: '#64748b',
+    marginBottom: 16,
+  },
+  priceInput: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 20,
+    color: '#1e293b',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#f1f5f9',
+  },
+  saveButton: {
+    backgroundColor: '#0047AB',
+  },
+  cancelButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
