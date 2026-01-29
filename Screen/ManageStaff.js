@@ -40,28 +40,14 @@ export default function ManageStaff({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch staff from Firebase
-    const fetchStaff = async () => {
-      try {
-        const staffCollection = collection(db, "staff");
-        const unsubscribe = onSnapshot(staffCollection, (snapshot) => {
-          const staffData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setStaff(staffData);
-          setLoading(false);
-        });
-
-        return unsubscribe;
-      } catch (error) {
-        console.error("Error fetching staff:", error);
-        Alert.alert("Error", "Failed to load staff");
-        setLoading(false);
-      }
-    };
-
-    fetchStaff();
+    const unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
+      const staffData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setStaff(staffData);
+      setLoading(false);
+    });
 
     // Animation setup
     Animated.parallel([
@@ -110,6 +96,10 @@ export default function ManageStaff({ navigation }) {
       ).start();
     };
     animateWaves();
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Open Modal for New Entry

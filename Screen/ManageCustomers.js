@@ -28,10 +28,12 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import { useAuth } from "../AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
 export default function ManageCustomers({ navigation }) {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,28 +63,20 @@ export default function ManageCustomers({ navigation }) {
 
   // Firebase operations
   useEffect(() => {
-    // Fetch customers from Firebase
-    const fetchCustomers = async () => {
-      try {
-        const customersCollection = collection(db, "customers");
-        const unsubscribe = onSnapshot(customersCollection, (snapshot) => {
-          const customersData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setCustomers(customersData);
-          setLoading(false);
-        });
+    if (!user) {
+      setCustomers([]);
+      setLoading(false);
+      return;
+    }
 
-        return unsubscribe;
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-        Alert.alert("Error", "Failed to load customers");
-        setLoading(false);
-      }
-    };
-
-    fetchCustomers();
+    const unsubscribe = onSnapshot(collection(db, "customers"), (snapshot) => {
+      const customersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setCustomers(customersData);
+      setLoading(false);
+    });
 
     // Animation setup
     Animated.parallel([
@@ -131,7 +125,11 @@ export default function ManageCustomers({ navigation }) {
       ).start();
     };
     animateWaves();
-  }, []);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user]);
 
   // Open Modal for New Entry
   const openAddModal = () => {

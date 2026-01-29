@@ -10,7 +10,7 @@ import { db } from '../firebaseConfig';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function AdminDashboard({ navigation }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   // State for staff and customers data
   const [staff, setStaff] = useState([]);
@@ -24,59 +24,58 @@ export default function AdminDashboard({ navigation }) {
   const [fixedPrice, setFixedPrice] = useState(1000);
 
   useEffect(() => {
-    // Fetch staff and customers data
-    const fetchData = async () => {
-      try {
-        const staffCollection = collection(db, "staff");
-        const staffUnsubscribe = onSnapshot(staffCollection, (snapshot) => {
-          const staffData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setStaff(staffData);
-        });
+    if (!user) {
+      // Clear data when user logs out
+      setStaff([]);
+      setCustomers([]);
+      setBills([]);
+      setStaffAssignments([]);
+      return;
+    }
 
-        const customersCollection = collection(db, "customers");
-        const customersUnsubscribe = onSnapshot(customersCollection, (snapshot) => {
-          const customersData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setCustomers(customersData);
-        });
+    const unsubscribes = [];
 
-        const billsCollection = collection(db, "bills");
-        const billsUnsubscribe = onSnapshot(billsCollection, (snapshot) => {
-          const billsData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setBills(billsData);
-        });
+    const staffUnsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
+      const staffData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setStaff(staffData);
+    });
+    unsubscribes.push(staffUnsubscribe);
 
-        const settingsCollection = collection(db, "settings");
-        const settingsUnsubscribe = onSnapshot(settingsCollection, (snapshot) => {
-          if (!snapshot.empty) {
-            const settingsData = snapshot.docs[0].data();
-            setFixedPrice(settingsData.fixedPrice || 1000);
-          } else {
-            setFixedPrice(1000);
-          }
-        });
+    const customersUnsubscribe = onSnapshot(collection(db, "customers"), (snapshot) => {
+      const customersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setCustomers(customersData);
+    });
+    unsubscribes.push(customersUnsubscribe);
 
-        return () => {
-          staffUnsubscribe();
-          customersUnsubscribe();
-          billsUnsubscribe();
-          settingsUnsubscribe();
-        };
-      } catch (error) {
-        console.error("Error fetching data:", error);
+    const billsUnsubscribe = onSnapshot(collection(db, "bills"), (snapshot) => {
+      const billsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setBills(billsData);
+    });
+    unsubscribes.push(billsUnsubscribe);
+
+    const settingsUnsubscribe = onSnapshot(collection(db, "settings"), (snapshot) => {
+      if (!snapshot.empty) {
+        const settingsData = snapshot.docs[0].data();
+        setFixedPrice(settingsData.fixedPrice || 1000);
+      } else {
+        setFixedPrice(1000);
       }
-    };
+    });
+    unsubscribes.push(settingsUnsubscribe);
 
-    fetchData();
-  }, []);
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }, [user]);
 
   // Process staff assignments and pending bills when staff or customers change
   useEffect(() => {
