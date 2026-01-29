@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView, Dimensions, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { useAuth } from '../AuthContext';
 import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function AdminDashboard({ navigation }) {
   const { logout } = useAuth();
@@ -218,7 +220,7 @@ export default function AdminDashboard({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -406,7 +408,7 @@ export default function AdminDashboard({ navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -418,13 +420,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
-    marginTop: 50,
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginTop: screenHeight * 0.05,
+    marginHorizontal: screenWidth * 0.05,
+    marginBottom: screenHeight * 0.02,
   },
   headerGradient: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: screenWidth * 0.05,
+    padding: screenWidth * 0.05,
     elevation: 8,
     shadowColor: '#0047AB',
     shadowOffset: { width: 0, height: 4 },
@@ -437,13 +439,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: screenWidth * 0.06,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#e0f2fe',
     opacity: 0.9,
   },
@@ -453,8 +455,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   section: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    marginHorizontal: screenWidth * 0.05,
+    marginBottom: screenHeight * 0.0375,
   },
   sectionTitle: {
     fontSize: 18,
@@ -469,10 +471,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    maxWidth: '95%',
-    minWidth: '50%',
-    marginBottom: 16,
-    borderRadius: 16,
+    width: (screenWidth - screenWidth * 0.1 - 20) / 2, // Two cards per row with margins
+    marginBottom: screenHeight * 0.02,
+    borderRadius: screenWidth * 0.04,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -504,13 +505,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: screenWidth * 0.05,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   statTitle: {
-    fontSize: 12,
+    fontSize: screenWidth * 0.03,
     color: '#e0f2fe',
     opacity: 0.9,
     textTransform: 'uppercase',
