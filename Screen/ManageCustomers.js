@@ -36,6 +36,7 @@ export default function ManageCustomers({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -158,6 +159,7 @@ export default function ManageCustomers({ navigation }) {
     setSelectedCustomerId(item.id);
     setCustomerData({
       name: item.name,
+      email: item.email,
       cnic: item.cnic,
       phone: item.phone,
       address: item.address,
@@ -260,12 +262,32 @@ export default function ManageCustomers({ navigation }) {
     );
   };
 
-  // Filter List based on Search
+  // Handle Status Toggle
+  const handleStatusToggle = async (id, currentStatus) => {
+    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+    try {
+      const customerRef = doc(db, "customers", id);
+      await updateDoc(customerRef, { status: newStatus });
+      Alert.alert("Success", `Customer status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating customer status:", error);
+      Alert.alert("Error", "Failed to update customer status. Please try again.");
+    }
+  };
+
+  // Filter List based on Search and Status
   const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email?.toLowerCase().includes(search.toLowerCase()) ||
-      c.connection.toLowerCase().includes(search.toLowerCase())
+    (c) => {
+      const matchesSearch =
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.email?.toLowerCase().includes(search.toLowerCase()) ||
+        c.connection.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        filterStatus === 'all' ||
+        (filterStatus === 'active' && c.status === 'Active') ||
+        (filterStatus === 'inactive' && c.status === 'Inactive');
+      return matchesSearch && matchesStatus;
+    }
   );
 
   const CustomerCard = ({ item, delay = 0 }) => {
@@ -304,10 +326,20 @@ export default function ManageCustomers({ navigation }) {
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
               </LinearGradient>
               <View style={styles.customerDetails}>
-                <Text style={styles.customerName}>{item.name}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.customerName}>{item.name}</Text>
+                  <View style={[styles.statusBadge, item.status === 'Active' ? styles.activeBadge : styles.inactiveBadge]}>
+                    <Text style={styles.statusText}>{item.status || 'Active'}</Text>
+                  </View>
+                </View>
                 <Text style={styles.customerSub}>ID: {item.connection}</Text>
                 <Text style={styles.customerEmail}>{item.email}</Text>
                 <Text style={styles.customerPhone}>{item.phone}</Text>
+                {item.createdAt && (
+                  <Text style={styles.customerDate}>
+                    Joined: {new Date(item.createdAt.seconds * 1000).toLocaleDateString()}
+                  </Text>
+                )}
               </View>
             </View>
             <View style={styles.actionButtons}>
@@ -322,6 +354,16 @@ export default function ManageCustomers({ navigation }) {
                 onPress={() => openEditModal(item)}
               >
                 <Ionicons name="create-outline" size={20} color="#0047AB" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconBtn, item.status === 'Active' ? styles.deactivateBtn : styles.activateBtn]}
+                onPress={() => handleStatusToggle(item.id, item.status)}
+              >
+                <Ionicons
+                  name={item.status === 'Active' ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={item.status === 'Active' ? "#f59e0b" : "#10b981"}
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, styles.deleteBtn]}
@@ -449,52 +491,40 @@ export default function ManageCustomers({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <LinearGradient
-            colors={["#0047AB", "#0284c7"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="people" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>{customers.length}</Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Total Customers</Text>
-              </View>
-            </View>
-          </LinearGradient>
-          <LinearGradient
-            colors={["#10b981", "#059669"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="checkmark-circle" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>
-                  {customers.filter((c) => c.status === "Active").length}
-                </Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Active</Text>
-              </View>
-            </View>
-          </LinearGradient>
-          <LinearGradient
-            colors={["#f59e0b", "#d97706"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="time" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>
-                  {customers.filter((c) => c.status === "Pending").length}
-                </Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Pending</Text>
-              </View>
-            </View>
-          </LinearGradient>
+          <TouchableOpacity onPress={() => setFilterStatus('all')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'all' ? ["#0047AB", "#0284c7"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="people" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>{customers.length}</Text>
+              <Text style={styles.statLabelWhite}>Total Customers</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterStatus('active')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'active' ? ["#10b981", "#059669"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="checkmark-circle" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>
+                {customers.filter((c) => c.status === "Active").length}
+              </Text>
+              <Text style={styles.statLabelWhite}>Active</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterStatus('inactive')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'inactive' ? ["#ef4444", "#dc2626"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="close-circle" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>
+                {customers.filter((c) => c.status === "Inactive").length}
+              </Text>
+              <Text style={styles.statLabelWhite}>Inactive</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* List */}
@@ -714,10 +744,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    paddingTop: 50,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    padding: width * 0.05,
+    paddingTop: height * 0.06,
+    borderBottomLeftRadius: width * 0.075,
+    borderBottomRightRadius: width * 0.075,
   },
   backButton: {
     padding: 8,
@@ -745,9 +775,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    margin: 20,
-    borderRadius: 16,
-    height: 56,
+    margin: width * 0.05,
+    borderRadius: width * 0.04,
+    height: height * 0.07,
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.1,
@@ -769,14 +799,17 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 20,
-    marginBottom: 20,
+    justifyContent: "space-around",
+    // height: height * 0.12,
+    marginHorizontal: width * 0.02,
+    marginBottom: height * 0.025,
   },
   statItem: {
-    width: "30%",
-    flexDirection: "row",
+    // flex: 1,
+    width: (width - width * 0.1) / 3,
+    flexDirection: "column",
     alignItems: "center",
+    marginHorizontal: width * 0.01,
     marginBottom: 16,
     borderRadius: 16,
     elevation: 6,
@@ -784,7 +817,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    padding: 16,
+    padding: 6,
+  },
+  statItemTouchable: {
+    borderRadius: 16,
   },
   statTextContainer: {
     marginLeft: 12,
@@ -811,12 +847,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   listContainer: {
-    padding: 20,
-    paddingBottom: 100,
+    padding: width * 0.05,
+    paddingBottom: height * 0.125,
   },
   customerCard: {
-    marginBottom: 16,
-    borderRadius: 16,
+    marginBottom: height * 0.02,
+    borderRadius: width * 0.04,
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.1,
@@ -824,8 +860,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   customerCardGradient: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: width * 0.04,
+    padding: width * 0.05,
   },
   customerInfo: { flexDirection: "row", alignItems: "center" },
   avatar: {
@@ -838,9 +874,16 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: "#fff", fontWeight: "bold", fontSize: 22 },
   customerDetails: { flex: 1 },
-  customerName: { fontSize: 18, fontWeight: "bold", color: "#1e293b" },
-  customerSub: { fontSize: 14, color: "#64748b", marginTop: 2 },
-  customerPhone: { fontSize: 14, color: "#64748b", marginTop: 2 },
+  customerName: { fontSize: width * 0.045, fontWeight: "bold", color: "#1e293b" },
+  customerSub: { fontSize: width * 0.035, color: "#64748b", marginTop: 2 },
+  customerPhone: { fontSize: width * 0.035, color: "#64748b", marginTop: 2 },
+  customerEmail: { fontSize: width * 0.035, color: "#64748b", marginTop: 2 },
+  customerDate: { fontSize: width * 0.032, color: "#94a3b8", marginTop: 2 },
+  nameRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  activeBadge: { backgroundColor: "#dcfce7" },
+  inactiveBadge: { backgroundColor: "#fef2f2" },
+  statusText: { fontSize: width * 0.03, fontWeight: "600" },
   actionButtons: { flexDirection: "row" },
   iconBtn: {
     padding: 12,
@@ -856,6 +899,12 @@ const styles = StyleSheet.create({
   deleteBtn: {
     backgroundColor: "rgba(239, 68, 68, 0.1)",
   },
+  activateBtn: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+  },
+  deactivateBtn: {
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
+  },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -866,17 +915,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: "bold",
     color: "#1e293b",
     marginBottom: 8,
     textAlign: "center",
   },
   emptySubtitle: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     color: "#64748b",
     textAlign: "center",
-    marginBottom: 32,
+    marginBottom: height * 0.04,
   },
   emptyButton: {
     borderRadius: 16,
