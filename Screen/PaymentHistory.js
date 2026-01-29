@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator
+  StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator, Dimensions
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function PaymentHistory({ navigation, route }) {
   const { customerId, customerName } = route.params;
@@ -49,6 +52,38 @@ export default function PaymentHistory({ navigation, route }) {
     }
   };
 
+  const formatBillDate = (billDate) => {
+    if (!billDate) return 'N/A';
+
+    try {
+      let date;
+      if (billDate.toDate) {
+        // Firestore Timestamp
+        date = billDate.toDate();
+      } else if (typeof billDate === 'string' || typeof billDate === 'number') {
+        // String or number timestamp
+        date = new Date(billDate);
+      } else {
+        // Already a Date object
+        date = new Date(billDate);
+      }
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting bill date:', error);
+      return 'Invalid Date';
+    }
+  };
+
   const handleStatusChange = async (billId, currentStatus) => {
     let newStatus;
     if (currentStatus === 'paid') {
@@ -79,12 +114,13 @@ export default function PaymentHistory({ navigation, route }) {
         <View style={styles.billInfo}>
           <Text style={styles.billAmount}>Rs.{item.amount.toLocaleString()}</Text>
           <Text style={styles.billDate}>
-            {new Date(item.billDate).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })}
+            Bill Date: {formatBillDate(item.billDate)}
           </Text>
+          {item.paymentDate && (
+            <Text style={styles.paymentDate}>
+              Paid on: {formatBillDate(item.paymentDate)}
+            </Text>
+          )}
         </View>
         <View style={[styles.statusContainer, { backgroundColor: getStatusColor(item.status) + '20' }]}>
           <Ionicons name={getStatusIcon(item.status)} size={16} color={getStatusColor(item.status)} />
@@ -93,16 +129,6 @@ export default function PaymentHistory({ navigation, route }) {
           </Text>
         </View>
       </View>
-
-      {item.paymentDate && (
-        <Text style={styles.paymentDate}>
-          Paid on: {new Date(item.paymentDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          })}
-        </Text>
-      )}
 
       {item.notes && (
         <Text style={styles.notes}>Notes: {item.notes}</Text>
@@ -130,13 +156,17 @@ export default function PaymentHistory({ navigation, route }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0047AB" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Payment History</Text>
-          <Text style={styles.customerName}>{customerName}</Text>
-        </View>
+        <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.headerGradient}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>💳 Payment History</Text>
+              <Text style={styles.customerName}>{customerName}</Text>
+            </View>
+          </View>
+        </LinearGradient>
       </View>
 
       <FlatList
@@ -161,43 +191,57 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    marginTop: screenHeight * 0.05,
+    marginHorizontal: screenWidth * 0.05,
+    marginBottom: screenHeight * 0.02,
   },
-  backButton: {
-    padding: 5,
+  headerGradient: {
+    borderRadius: screenWidth * 0.05,
+    padding: screenWidth * 0.05,
+    elevation: 8,
+    shadowColor: '#0047AB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  headerTextContainer: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: screenWidth * 0.04,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.06,
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: '#fff',
+    marginBottom: screenHeight * 0.005,
   },
   customerName: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: screenWidth * 0.035,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   listContainer: {
-    padding: 20,
+    paddingHorizontal: screenWidth * 0.05,
+    paddingBottom: screenHeight * 0.05,
   },
   billItem: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
+    borderRadius: screenWidth * 0.03,
+    padding: screenWidth * 0.04,
+    marginBottom: screenHeight * 0.015,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
@@ -205,65 +249,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: screenHeight * 0.01,
   },
   billInfo: {
     flex: 1,
   },
   billAmount: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   billDate: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#64748b',
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: screenWidth * 0.02,
+    paddingVertical: screenHeight * 0.005,
+    borderRadius: screenWidth * 0.03,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: screenWidth * 0.03,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: screenWidth * 0.01,
   },
   paymentDate: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#10b981',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   notes: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#64748b',
     fontStyle: 'italic',
   },
   statusButton: {
-    marginTop: 12,
+    marginTop: screenHeight * 0.01,
     backgroundColor: '#0047AB',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: screenHeight * 0.0075,
+    paddingHorizontal: screenWidth * 0.03,
+    borderRadius: screenWidth * 0.015,
     alignSelf: 'flex-start',
   },
   statusButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: screenWidth * 0.03,
     fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: screenHeight * 0.15,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: screenWidth * 0.04,
     color: '#64748b',
-    marginTop: 16,
+    marginTop: screenHeight * 0.02,
     textAlign: 'center',
   },
 });
