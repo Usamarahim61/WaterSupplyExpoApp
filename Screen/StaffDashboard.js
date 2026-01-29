@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../AuthContext';
@@ -14,6 +14,8 @@ export default function StaffDashboard({ navigation }) {
   const [assignedCustomers, setAssignedCustomers] = useState([]);
   const [customerBills, setCustomerBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'pending', 'paid'
 
   useEffect(() => {
     if (!user) {
@@ -59,17 +61,15 @@ export default function StaffDashboard({ navigation }) {
     }
 
     const assignedCustomerIds = assignedCustomers.map(c => c.id);
-    const billsQuery = query(
-      collection(db, "bills"),
-      where("customerId", "in", assignedCustomerIds.slice(0, 10)) // Firestore 'in' limit is 10
-    );
+    const billsQuery = query(collection(db, "bills"));
 
     const billsUnsubscribe = onSnapshot(billsQuery, (snapshot) => {
-      const bills = snapshot.docs.map((doc) => ({
+      const allBills = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setCustomerBills(bills);
+      const assignedBills = allBills.filter(bill => assignedCustomerIds.includes(bill.customerId));
+      setCustomerBills(assignedBills);
       setLoading(false);
     });
 
@@ -226,6 +226,48 @@ export default function StaffDashboard({ navigation }) {
     );
   }
 
+  // Filter customers based on search and filter type
+  const getFilteredCustomers = () => {
+    let filtered = assignedCustomers;
+
+    // Apply search filter
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter(customer =>
+        customer.name?.toLowerCase().includes(searchLower) ||
+        customer.cnic?.toLowerCase().includes(searchLower) ||
+        customer.phone?.toLowerCase().includes(searchLower) ||
+        customer.connectionNo?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply bill filter
+    if (filterType !== 'all') {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+
+      filtered = filtered.filter(customer => {
+        const customerBillsForThisCustomer = customerBills.filter(bill => bill.customerId === customer.id);
+        const currentMonthBills = customerBillsForThisCustomer.filter(bill => {
+          const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+          return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+        });
+
+        if (filterType === 'pending') {
+          return currentMonthBills.some(bill => bill.status === 'pending' || bill.status === 'not paid');
+        } else if (filterType === 'paid') {
+          return currentMonthBills.some(bill => bill.status === 'paid');
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredCustomers = getFilteredCustomers();
+
   const totalAssigned = assignedCustomers.length;
   const totalCollected = customerBills.filter(bill => bill.status === 'paid').length;
   const totalAmount = customerBills
@@ -286,15 +328,58 @@ export default function StaffDashboard({ navigation }) {
         {/* Assigned Customers */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>👥 Your Assigned Customers</Text>
+
+          {/* Search and Filter */}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by name, CNIC, phone, or connection no..."
+                value={searchText}
+                onChangeText={setSearchText}
+                placeholderTextColor="#94a3b8"
+              />
+            </View>
+            <View style={styles.filterContainer}>
+              <TouchableOpacity
+                style={[styles.filterButton, filterType === 'all' && styles.filterButtonActive]}
+                onPress={() => setFilterType('all')}
+              >
+                <Text style={[styles.filterButtonText, filterType === 'all' && styles.filterButtonTextActive]}>
+                  All
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterButton, filterType === 'pending' && styles.filterButtonActive]}
+                onPress={() => setFilterType('pending')}
+              >
+                <Text style={[styles.filterButtonText, filterType === 'pending' && styles.filterButtonTextActive]}>
+                  Pending Bills
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterButton, filterType === 'paid' && styles.filterButtonActive]}
+                onPress={() => setFilterType('paid')}
+              >
+                <Text style={[styles.filterButtonText, filterType === 'paid' && styles.filterButtonTextActive]}>
+                  Paid Bills
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.customersContainer}>
-            {assignedCustomers.length > 0 ? (
-              assignedCustomers.map((customer) => (
+            {filteredCustomers.length > 0 ? (
+              filteredCustomers.map((customer) => (
                 <CustomerCard key={customer.id} item={customer} />
               ))
             ) : (
               <View style={styles.noCustomers}>
                 <Ionicons name="people" size={48} color="#cbd5e1" />
-                <Text style={styles.noCustomersText}>No customers assigned yet</Text>
+                <Text style={styles.noCustomersText}>
+                  {assignedCustomers.length > 0 ? 'No customers match your search' : 'No customers assigned yet'}
+                </Text>
               </View>
             )}
           </View>
@@ -534,5 +619,59 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 16,
     textAlign: 'center',
+  },
+  searchContainer: {
+    marginBottom: 20,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  filterButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  filterButtonActive: {
+    backgroundColor: '#0047AB',
+    borderColor: '#0047AB',
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
   },
 });

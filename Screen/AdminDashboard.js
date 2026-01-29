@@ -259,7 +259,7 @@ export default function AdminDashboard({ navigation }) {
               value={`Rs.${bills.filter(bill => bill.status === 'paid').reduce((sum, bill) => sum + bill.amount, 0).toLocaleString()}`}
               icon="cash"
               gradient={['#10b981', '#059669']}
-              onPress={() => navigation.navigate('ManageCustomers')}
+              // onPress={() => navigation.navigate('')}
             />
           </View>
         </View>
@@ -295,12 +295,12 @@ export default function AdminDashboard({ navigation }) {
               onPress={() => handleNavigation('AssignCustomers')}
               color="#f59e0b"
             />
-            <ActionCard
+            {/* <ActionCard
               icon="analytics"
               title="Reports"
               subtitle="View detailed analytics"
               color="#ef4444"
-            />
+            /> */}
           </View>
         </View>
 

@@ -89,7 +89,7 @@ export default function AssignCustomers({ navigation, route }) {
 
     const matchesSearch = searchTerm === '' ||
       (customer.name && customer.name.toLowerCase().includes(searchTerm)) ||
-      (customer.connectionNo && customer.connectionNo.toLowerCase().includes(searchTerm)) ||
+      (customer.connection && customer.connection.toLowerCase().includes(searchTerm)) ||
       (customer.cnic && customer.cnic.toLowerCase().includes(searchTerm)) ||
       (customer.phone && customer.phone.toLowerCase().includes(searchTerm));
 
@@ -290,7 +290,7 @@ export default function AssignCustomers({ navigation, route }) {
           keyExtractor={item => item.id}
           renderItem={({ item }) => {
             const isSelected = selectedCustomers.includes(item.id);
-            const isAssignedToSelectedStaff = item.assignedTo === selectedStaff?.id;
+            const isAssignedToSelectedStaff = item.assignedTo === selectedStaff?.uid;
             const willAssign = selectedStaff && !isAssignedToSelectedStaff;
             const willUnassign = selectedStaff && isAssignedToSelectedStaff;
 
@@ -329,7 +329,7 @@ export default function AssignCustomers({ navigation, route }) {
                   <View style={[styles.badge, isAssignedToSelectedStaff && styles.selectedStaffBadge]}>
                     <Text style={[styles.badgeText, isAssignedToSelectedStaff && styles.selectedStaffBadgeText]}>
                       {(() => {
-                        const assignedStaff = staffMembers.find(staff => staff.id === item.assignedTo);
+                        const assignedStaff = staffMembers.find(staff => staff.uid === item.assignedTo);
                         return assignedStaff ? `Assigned to ${assignedStaff.name}` : 'Assigned';
                       })()}
                     </Text>
@@ -380,7 +380,7 @@ export default function AssignCustomers({ navigation, route }) {
                           <Text style={styles.customerName}>{customer.name}</Text>
                           <Text style={styles.customerInfo}>CNIC: {customer.cnic || 'N/A'}</Text>
                           <Text style={styles.customerInfo}>Phone: {customer.phone || 'N/A'}</Text>
-                          <Text style={styles.customerId}>ID: {customer.connectionNo}</Text>
+                          <Text style={styles.customerId}>ID: {customer.connection}</Text>
                         </View>
                         {assignedStaff && (
                           <View style={styles.assignedBadge}>

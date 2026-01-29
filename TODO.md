@@ -1,12 +1,10 @@
-# Bill Tracking System Implementation
+# AssignCustomers Logic Fixes
 
-## Tasks
-- [x] Create new Screen/PaymentHistory.js for viewing customer payment history
-- [ ] Modify Screen/PendingBills.js to fetch actual bill data and add "View History" functionality
-- [ ] Update Screen/AdminDashboard.js to calculate pending bills from actual bill data
-- [ ] Add bill generation functionality (create bills for customers)
-- [ ] Test bill creation, status updates, and history viewing
+## Completed Tasks
+- [x] Update all references to `selectedStaff.uid` to `selectedStaff.id` in AssignCustomers.js for consistency with other files.
+- [x] Change `ID: {item.connection}` to `ID: {item.connectionNo}` in the customer row render.
+- [x] Ensure the assigned staff finder uses `staff.id` instead of `staff.uid`.
 
-## Current Status
-- PaymentHistory.js screen created
-- Starting PendingBills.js modifications
+## Followup Steps
+- [ ] Test assigning and unassigning customers to verify messages display correctly and assignments update properly.
+- [ ] Check the modal and badges for accurate display.
