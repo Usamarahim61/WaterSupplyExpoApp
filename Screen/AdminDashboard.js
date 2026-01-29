@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
 import { useAuth } from '../AuthContext';
 import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -79,7 +80,7 @@ export default function AdminDashboard({ navigation }) {
   useEffect(() => {
     const assignments = staff.map((staffMember) => {
       const assignedCustomers = customers.filter(
-        (customer) => customer.assignedTo === staffMember.id
+        (customer) => customer.assignedTo === staffMember.uid
       );
       return {
         ...staffMember,
@@ -107,6 +108,11 @@ export default function AdminDashboard({ navigation }) {
         { text: 'Logout', onPress: logout },
       ]
     );
+  };
+
+  const copyToClipboard = async (text) => {
+    await Clipboard.setStringAsync(text);
+    Alert.alert('Copied!', 'Connection number copied to clipboard');
   };
 
   const handleGenerateBills = async () => {
@@ -381,8 +387,16 @@ export default function AdminDashboard({ navigation }) {
                 selectedStaffCustomers.map((customer) => (
                   <View key={customer.id} style={styles.customerItem}>
                     <Ionicons name="person" size={16} color="#0047AB" />
-                    <Text style={styles.customerName}>{customer.name}</Text>
-                    <Text style={styles.customerId}>ID: {customer.connectionNo}</Text>
+                    <View style={styles.customerInfo}>
+                      <Text style={styles.customerName}>{customer.name}</Text>
+                      <Text style={styles.customerId}>ID: {customer.connection}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.copyButton}
+                      onPress={() => copyToClipboard(customer.connection)}
+                    >
+                      <Ionicons name="copy-outline" size={16} color="#0047AB" />
+                    </TouchableOpacity>
                   </View>
                 ))
               ) : (
@@ -639,18 +653,27 @@ const styles = StyleSheet.create({
   customerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 8,
+    justifyContent: 'space-between',
+  },
+  customerInfo: {
+    flex: 1,
+    marginLeft: 8,
   },
   customerName: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1e293b',
-    marginLeft: 8,
-    flex: 1,
+    marginBottom: 2,
   },
   customerId: {
     fontSize: 12,
     color: '#64748b',
+  },
+  copyButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f1f5f9',
   },
   noCustomers: {
     fontSize: 14,
