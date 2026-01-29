@@ -124,16 +124,41 @@ export default function AdminDashboard({ navigation }) {
       return;
     }
 
+    // Get current month and year
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    // Filter customers who don't have bills for the current month
+    const customersWithoutCurrentMonthBill = customers.filter(customer => {
+      // Check if customer has any bills for the current month
+      const customerBills = bills.filter(bill => bill.customerId === customer.id);
+      const hasCurrentMonthBill = customerBills.some(bill => {
+        const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+        return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+      });
+      return !hasCurrentMonthBill;
+    });
+
+    if (customersWithoutCurrentMonthBill.length === 0) {
+      Alert.alert(
+        'All Bills Generated',
+        'All customers already have bills generated for the current month.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     Alert.alert(
       'Generate Bills',
-      `Generate bills for ${customers.length} customers at Rs.${fixedPrice} each?`,
+      `Generate bills for ${customersWithoutCurrentMonthBill.length} customers at Rs.${fixedPrice} each?\n\n${customers.length - customersWithoutCurrentMonthBill.length} customers already have bills for this month.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Generate',
           onPress: async () => {
             try {
-              const billsToCreate = customers.map(customer => ({
+              const billsToCreate = customersWithoutCurrentMonthBill.map(customer => ({
                 customerId: customer.id,
                 amount: fixedPrice,
                 status: 'pending',
@@ -149,7 +174,7 @@ export default function AdminDashboard({ navigation }) {
 
               await Promise.all(promises);
 
-              Alert.alert('Success', `Generated ${customers.length} bills successfully!`);
+              Alert.alert('Success', `Generated ${customersWithoutCurrentMonthBill.length} bills successfully!`);
             } catch (error) {
               console.error('Error generating bills:', error);
               Alert.alert('Error', 'Failed to generate bills. Please try again.');
@@ -340,6 +365,13 @@ export default function AdminDashboard({ navigation }) {
               subtitle={`Current: Rs.${fixedPrice}`}
               onPress={() => setEditModalVisible(true)}
               color="#8b5cf6"
+            />
+            <ActionCard
+              icon="document-text"
+              title="Manage Bills"
+              subtitle="View and delete current month bills"
+              onPress={() => handleNavigation('ManageBills')}
+              color="#ef4444"
             />
             {/* <ActionCard
               icon="analytics"

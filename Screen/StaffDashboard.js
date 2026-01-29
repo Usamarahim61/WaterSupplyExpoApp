@@ -40,7 +40,7 @@ export default function StaffDashboard({ navigation }) {
         setStaffData(staff);
 
         // Fetch customers assigned to this staff after staff data is loaded using database-level querying
-        const q = query(collection(db, "customers"), where("assignedTo", "==", staff.id));
+        const q = query(collection(db, "customers"), where("assignedTo", "==", staff.uid));
         const querySnapshot = await getDocs(q);
         const assignedCustomers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAssignedCustomers(assignedCustomers);

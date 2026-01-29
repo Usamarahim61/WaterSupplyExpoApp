@@ -9,14 +9,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '../firebaseConfig';
+import { useAuth } from '../AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ManageStaff({ navigation }) {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -40,14 +43,23 @@ export default function ManageStaff({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
-      const staffData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setStaff(staffData);
+    let unsubscribe = () => {};
+
+    if (user) {
+      // Only set up snapshot listener if user is authenticated
+      unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
+        const staffData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setStaff(staffData);
+        setLoading(false);
+      });
+    } else {
+      // Clear data when user logs out
+      setStaff([]);
       setLoading(false);
-    });
+    }
 
     // Animation setup
     Animated.parallel([
@@ -100,7 +112,7 @@ export default function ManageStaff({ navigation }) {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   // Open Modal for New Entry
   const openAddModal = () => {
@@ -236,10 +248,31 @@ export default function ManageStaff({ navigation }) {
     );
   };
 
-  // Filter List based on Search
-  const filteredStaff = staff.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
+  // Handle Status Toggle
+  const handleStatusToggle = async (id, currentStatus) => {
+    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+    try {
+      const staffRef = doc(db, "staff", id);
+      await updateDoc(staffRef, { status: newStatus });
+      Alert.alert("Success", `Staff status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating staff status:", error);
+      Alert.alert("Error", "Failed to update staff status. Please try again.");
+    }
+  };
+
+  // Filter List based on Search and Status
+  const filteredStaff = staff.filter(
+    (c) => {
+      const matchesSearch =
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.email?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        filterStatus === 'all' ||
+        (filterStatus === 'active' && c.status === 'Active') ||
+        (filterStatus === 'inactive' && c.status === 'Inactive');
+      return matchesSearch && matchesStatus;
+    }
   );
 
   const StaffCard = ({ item, delay = 0 }) => {
@@ -267,28 +300,54 @@ export default function ManageStaff({ navigation }) {
       >
         <TouchableOpacity style={styles.staffCard} activeOpacity={0.8}>
           <LinearGradient
-            colors={['#fff', '#f8fafc']}
+            colors={["#ffffff", "#f1f5f9", "#e2e8f0"]}
             style={styles.staffCardGradient}
           >
             <View style={styles.staffInfo}>
               <LinearGradient
-                colors={['#0047AB', '#0284c7']}
+                colors={["#0047AB", "#0284c7"]}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
               </LinearGradient>
               <View style={styles.staffDetails}>
-                <Text style={styles.staffName}>{item.name}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.staffName}>{item.name}</Text>
+                  <View style={[styles.statusBadge, item.status === 'Active' ? styles.activeBadge : styles.inactiveBadge]}>
+                    <Text style={styles.statusText}>{item.status || 'Active'}</Text>
+                  </View>
+                </View>
                 <Text style={styles.staffSub}>{item.email}</Text>
                 <Text style={styles.staffPhone}>{item.phone}</Text>
+                {item.createdAt && (
+                  <Text style={styles.staffDate}>
+                    Joined: {new Date(item.createdAt.seconds * 1000).toLocaleDateString()}
+                  </Text>
+                )}
               </View>
             </View>
             <View style={styles.actionButtons}>
+              {/* <TouchableOpacity
+                style={[styles.iconBtn, styles.viewBtn]}
+                onPress={() => navigation.navigate('StaffDashboard', { staff: item })}
+              >
+                <Ionicons name="eye-outline" size={20} color="#10b981" />
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[styles.iconBtn, styles.editBtn]}
                 onPress={() => openEditModal(item)}
               >
                 <Ionicons name="create-outline" size={20} color="#0047AB" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconBtn, item.status === 'Active' ? styles.deactivateBtn : styles.activateBtn]}
+                onPress={() => handleStatusToggle(item.id, item.status)}
+              >
+                <Ionicons
+                  name={item.status === 'Active' ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={item.status === 'Active' ? "#f59e0b" : "#10b981"}
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, styles.deleteBtn]}
@@ -402,52 +461,40 @@ export default function ManageStaff({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <LinearGradient
-            colors={["#0047AB", "#0284c7"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="people" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>{staff.length}</Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Total Staff</Text>
-              </View>
-            </View>
-          </LinearGradient>
-          <LinearGradient
-            colors={["#10b981", "#059669"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="checkmark-circle" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>
-                  {staff.filter((s) => s.status === "Active").length}
-                </Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Active</Text>
-              </View>
-            </View>
-          </LinearGradient>
-          <LinearGradient
-            colors={["#f59e0b", "#d97706"]}
-            style={styles.statItem}
-          >
-            <View style={styles.flex}>
-              <View style={styles.flexRow}>
-                <Ionicons name="time" size={24} color="#fff" />
-                <Text style={styles.statNumberWhite}>
-                  {staff.filter((s) => s.status === "Pending").length}
-                </Text>
-              </View>
-              <View style={styles.statTextContainer}>
-                <Text style={styles.statLabelWhite}>Pending</Text>
-              </View>
-            </View>
-          </LinearGradient>
+          <TouchableOpacity onPress={() => setFilterStatus('all')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'all' ? ["#0047AB", "#0284c7"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="people" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>{staff.length}</Text>
+              <Text style={styles.statLabelWhite}>Total Staff</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterStatus('active')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'active' ? ["#10b981", "#059669"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="checkmark-circle" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>
+                {staff.filter((s) => s.status === "Active").length}
+              </Text>
+              <Text style={styles.statLabelWhite}>Active</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFilterStatus('inactive')} style={styles.statItemTouchable}>
+            <LinearGradient
+              colors={filterStatus === 'inactive' ? ["#ef4444", "#dc2626"] : ["#64748b", "#475569"]}
+              style={styles.statItem}
+            >
+              <Ionicons name="close-circle" size={32} color="#fff" />
+              <Text style={styles.statNumberWhite}>
+                {staff.filter((s) => s.status === "Inactive").length}
+              </Text>
+              <Text style={styles.statLabelWhite}>Inactive</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* List */}
@@ -629,8 +676,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 50,
+    padding: width * 0.05,
+    paddingTop: height * 0.06,
+        borderBottomLeftRadius: width * 0.075,
+    borderBottomRightRadius: width * 0.075,
   },
   backButton: {
     padding: 8,
@@ -711,6 +760,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     minWidth: 120,
   },
+  statItemTouchable: {
+    borderRadius: 16,
+  },
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -749,17 +801,32 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 22 },
   staffDetails: { flex: 1 },
-  staffName: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
-  staffSub: { fontSize: 14, color: '#64748b', marginTop: 2 },
-  staffPhone: { fontSize: 14, color: '#64748b', marginTop: 2 },
+  staffName: { fontSize: width * 0.045, fontWeight: 'bold', color: '#1e293b' },
+  staffSub: { fontSize: width * 0.035, color: '#64748b', marginTop: 2 },
+  staffPhone: { fontSize: width * 0.035, color: '#64748b', marginTop: 2 },
+  staffDate: { fontSize: width * 0.032, color: '#94a3b8', marginTop: 2 },
+  nameRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  activeBadge: { backgroundColor: "#dcfce7" },
+  inactiveBadge: { backgroundColor: "#fef2f2" },
+  statusText: { fontSize: width * 0.03, fontWeight: "600" },
   actionButtons: { flexDirection: 'row' },
   iconBtn: {
     padding: 12,
     borderRadius: 12,
     marginLeft: 8,
   },
+  viewBtn: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+  },
   editBtn: {
     backgroundColor: 'rgba(14, 165, 233, 0.1)',
+  },
+  activateBtn: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+  },
+  deactivateBtn: {
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
   },
   deleteBtn: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

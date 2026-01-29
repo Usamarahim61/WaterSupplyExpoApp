@@ -8,6 +8,7 @@ import StaffDashboard from './Screen/StaffDashboard';
 import ManageCustomers from './Screen/ManageCustomers';
 import ManageStaff from './Screen/ManageStaff';
 import AssignCustomers from './Screen/AssignCustomers';
+import ManageBills from './Screen/ManageBills';
 import PendingBills from './Screen/PendingBills';
 import PaymentHistory from './Screen/PaymentHistory';
 import CustomerBillStatement from './Screen/CustomerBillStatement';
@@ -32,6 +33,7 @@ function AppNavigator() {
               <Stack.Screen name="ManageCustomers" component={ManageCustomers} />
               <Stack.Screen name="ManageStaff" component={ManageStaff} />
               <Stack.Screen name="AssignCustomers" component={AssignCustomers} />
+              <Stack.Screen name="ManageBills" component={ManageBills} />
               <Stack.Screen name="PendingBills" component={PendingBills} />
               <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
               <Stack.Screen name="CustomerBillStatement" component={CustomerBillStatement} />
