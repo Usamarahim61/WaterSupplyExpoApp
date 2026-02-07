@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../AuthContext';
 import { collection, onSnapshot, query, where, updateDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function StaffDashboard({ navigation }) {
   const { user, logout } = useAuth();
@@ -159,28 +161,60 @@ export default function StaffDashboard({ navigation }) {
 
     return (
       <View style={styles.customerCard}>
-        <LinearGradient colors={['#ffffff', '#f1f5f9']} style={styles.customerCardGradient}>
+        <LinearGradient colors={['#ffffff', '#f8fafc']} style={styles.customerCardGradient}>
           <View style={styles.customerHeader}>
-            <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.customerAvatar}>
-              <Text style={styles.customerAvatarText}>{item.name.charAt(0)}</Text>
-            </LinearGradient>
+            <View style={styles.avatarContainer}>
+              <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.customerAvatar}>
+                <Text style={styles.customerAvatarText}>{item.name.charAt(0).toUpperCase()}</Text>
+              </LinearGradient>
+            </View>
             <View style={styles.customerInfo}>
               <Text style={styles.customerName}>{item.name}</Text>
-              <Text style={styles.customerSub}>ID: {item.connectionNo}</Text>
-              <Text style={styles.customerPhone}>{item.phone}</Text>
+              <View style={styles.customerDetails}>
+                <View style={styles.detailRow}>
+                  <Ionicons name="card-outline" size={screenWidth * 0.035} color="#64748b" />
+                  <Text style={styles.customerSub}>ID: {item.connection}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Ionicons name="call-outline" size={screenWidth * 0.035} color="#64748b" />
+                  <Text style={styles.customerPhone}>{item.phone}</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.statusIndicator}>
+              {pendingBills.length > 0 ? (
+                <View style={[styles.statusBadge, { backgroundColor: '#fef3c7' }]}>
+                  <Ionicons name="time-outline" size={screenWidth * 0.035} color="#f59e0b" />
+                  <Text style={[styles.statusText, { color: '#f59e0b' }]}>Pending</Text>
+                </View>
+              ) : (
+                <View style={[styles.statusBadge, { backgroundColor: '#d1fae5' }]}>
+                  <Ionicons name="checkmark-circle-outline" size={screenWidth * 0.035} color="#10b981" />
+                  <Text style={[styles.statusText, { color: '#10b981' }]}>Up to Date</Text>
+                </View>
+              )}
             </View>
           </View>
 
           <View style={styles.customerStats}>
             <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: '#fef3c7' }]}>
+                <Ionicons name="time-outline" size={screenWidth * 0.04} color="#f59e0b" />
+              </View>
               <Text style={styles.statNumber}>{pendingBills.length}</Text>
               <Text style={styles.statLabel}>Pending Bills</Text>
             </View>
             <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: '#d1fae5' }]}>
+                <Ionicons name="checkmark-circle-outline" size={screenWidth * 0.04} color="#10b981" />
+              </View>
               <Text style={styles.statNumber}>{paidBills.length}</Text>
               <Text style={styles.statLabel}>Paid Bills</Text>
             </View>
             <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: '#dbeafe' }]}>
+                <Ionicons name="cash-outline" size={screenWidth * 0.04} color="#3b82f6" />
+              </View>
               <Text style={[styles.statNumber, { color: '#10b981' }]}>
                 Rs.{paidBills.reduce((sum, bill) => sum + bill.amount, 0).toLocaleString()}
               </Text>
@@ -190,23 +224,43 @@ export default function StaffDashboard({ navigation }) {
 
           {pendingBills.length > 0 && (
             <View style={styles.pendingBillsSection}>
-              <Text style={styles.sectionTitle}>Pending Bills:</Text>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="document-text-outline" size={screenWidth * 0.04} color="#64748b" />
+                <Text style={styles.sectionTitle}>Pending Bills ({pendingBills.length})</Text>
+              </View>
               {pendingBills.map(bill => (
                 <View key={bill.id} style={styles.billItem}>
                   <View style={styles.billInfo}>
-                    <Text style={styles.billAmount}>Rs.{bill.amount.toLocaleString()}</Text>
-                    <Text style={styles.billDate}>
-                      {new Date(bill.billDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </Text>
+                    <View style={styles.billAmountContainer}>
+                      <Ionicons name="cash" size={screenWidth * 0.04} color="#1e293b" />
+                      <Text style={styles.billAmount}>Rs.{bill.amount.toLocaleString()}</Text>
+                    </View>
+                    <View style={styles.billDateContainer}>
+                      <Ionicons name="calendar-outline" size={screenWidth * 0.035} color="#64748b" />
+                      <Text style={styles.billDate}>
+                        {(() => {
+                          try {
+                            const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+                            if (isNaN(billDate.getTime())) {
+                              return 'Invalid Date';
+                            }
+                            return billDate.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            });
+                          } catch (error) {
+                            return 'Invalid Date';
+                          }
+                        })}
+                      </Text>
+                    </View>
                   </View>
                   <TouchableOpacity
                     style={[styles.payButton, { backgroundColor: getStatusColor(bill.status) }]}
                     onPress={() => handleMarkAsPaid(bill.id, item.name)}
                   >
-                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Ionicons name="checkmark" size={screenWidth * 0.04} color="#fff" />
                     <Text style={styles.payButtonText}>Mark Paid</Text>
                   </TouchableOpacity>
                 </View>
@@ -237,7 +291,7 @@ export default function StaffDashboard({ navigation }) {
         customer.name?.toLowerCase().includes(searchLower) ||
         customer.cnic?.toLowerCase().includes(searchLower) ||
         customer.phone?.toLowerCase().includes(searchLower) ||
-        customer.connectionNo?.toLowerCase().includes(searchLower)
+        customer.connection?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -249,14 +303,28 @@ export default function StaffDashboard({ navigation }) {
 
       filtered = filtered.filter(customer => {
         const customerBillsForThisCustomer = customerBills.filter(bill => bill.customerId === customer.id);
-        const currentMonthBills = customerBillsForThisCustomer.filter(bill => {
-          const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
-          return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
-        });
 
         if (filterType === 'pending') {
+          // Show customers with pending bills in current month
+          const currentMonthBills = customerBillsForThisCustomer.filter(bill => {
+            try {
+              const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+              return !isNaN(billDate.getTime()) && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+            } catch (error) {
+              return false;
+            }
+          });
           return currentMonthBills.some(bill => bill.status === 'pending' || bill.status === 'not paid');
         } else if (filterType === 'paid') {
+          // Show customers with paid bills in current month
+          const currentMonthBills = customerBillsForThisCustomer.filter(bill => {
+            try {
+              const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+              return !isNaN(billDate.getTime()) && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+            } catch (error) {
+              return false;
+            }
+          });
           return currentMonthBills.some(bill => bill.status === 'paid');
         }
         return true;
@@ -394,16 +462,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    marginTop: screenHeight * 0.02,
+    fontSize: screenWidth * 0.04,
+    color: '#64748b',
+  },
   header: {
-    marginTop: 50,
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginTop: screenHeight * 0.06,
+    marginHorizontal: screenWidth * 0.05,
+    marginBottom: screenHeight * 0.025,
   },
   headerGradient: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: screenWidth * 0.05,
+    padding: screenWidth * 0.05,
     elevation: 8,
-    shadowColor: '#0047AB',
+    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -414,31 +493,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: screenWidth * 0.06,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#e0f2fe',
+    fontSize: screenWidth * 0.035,
+    color: '#e0e7ff',
     opacity: 0.9,
   },
   logoutButton: {
-    padding: 8,
-    borderRadius: 12,
+    padding: screenWidth * 0.02,
+    borderRadius: screenWidth * 0.03,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   section: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    marginHorizontal: screenWidth * 0.05,
+    marginBottom: screenHeight * 0.0375,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 16,
-    marginLeft: 4,
+    // marginBottom: screenHeight * 0.02,
+    marginLeft: screenWidth * 0.01,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -446,9 +525,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    width: '48%',
-    marginBottom: 16,
-    borderRadius: 16,
+    width: screenWidth * 0.425,
+    marginBottom: screenHeight * 0.02,
+    borderRadius: screenWidth * 0.04,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -456,45 +535,51 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   statCardGradient: {
-    padding: 20,
-    borderRadius: 16,
+    padding: screenWidth * 0.05,
+    borderRadius: screenWidth * 0.04,
     alignItems: 'center',
   },
   statIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: screenWidth * 0.125,
+    height: screenWidth * 0.125,
+    borderRadius: screenWidth * 0.0625,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: screenHeight * 0.015,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: screenWidth * 0.06,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   statTitle: {
-    fontSize: 12,
-    color: '#e0f2fe',
+    fontSize: screenWidth * 0.03,
+    color: '#e0e7ff',
     opacity: 0.9,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'center',
   },
   statSubtitle: {
-    fontSize: 10,
-    color: '#e0f2fe',
+    fontSize: screenWidth * 0.025,
+    color: '#e0e7ff',
     opacity: 0.7,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: screenHeight * 0.0025,
+  },
+  tapIndicator: {
+    position: 'absolute',
+    bottom: screenHeight * 0.01,
+    right: screenWidth * 0.025,
+    opacity: 0.7,
   },
   customersContainer: {
-    gap: 16,
+    gap: screenHeight * 0.02,
   },
   customerCard: {
-    borderRadius: 16,
+    borderRadius: screenWidth * 0.04,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -504,133 +589,135 @@ const styles = StyleSheet.create({
     borderColor: '#f1f5f9',
   },
   customerCardGradient: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: screenWidth * 0.04,
+    padding: screenWidth * 0.05,
   },
   customerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: screenHeight * 0.02,
   },
   customerAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: screenWidth * 0.14,
+    height: screenWidth * 0.14,
+    borderRadius: screenWidth * 0.07,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: screenWidth * 0.04,
   },
   customerAvatarText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 22,
+    fontSize: screenWidth * 0.055,
   },
   customerInfo: {
     flex: 1,
   },
   customerName: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   customerSub: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#64748b',
-    marginBottom: 2,
+    marginBottom: screenHeight * 0.0025,
   },
   customerPhone: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     color: '#64748b',
   },
   customerStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    marginBottom: screenHeight * 0.02,
+    paddingVertical: screenHeight * 0.015,
+    paddingHorizontal: screenWidth * 0.04,
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    borderRadius: screenWidth * 0.03,
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
   statNumber: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: screenHeight * 0.005,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: screenWidth * 0.03,
     color: '#64748b',
     textAlign: 'center',
   },
   pendingBillsSection: {
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
-    paddingTop: 16,
+    paddingTop: screenHeight * 0.02,
   },
   billItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingVertical: screenHeight * 0.01,
+    paddingHorizontal: screenWidth * 0.03,
+    backgroundColor: '#fefefe',
+    borderRadius: screenWidth * 0.02,
+    marginBottom: screenHeight * 0.01,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   billInfo: {
     flex: 1,
   },
   billAmount: {
-    fontSize: 16,
+    fontSize: screenWidth * 0.04,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 2,
+    marginBottom: screenHeight * 0.0025,
   },
   billDate: {
-    fontSize: 12,
+    fontSize: screenWidth * 0.03,
     color: '#64748b',
   },
   payButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: screenHeight * 0.01,
+    paddingHorizontal: screenWidth * 0.03,
+    borderRadius: screenWidth * 0.015,
   },
   payButtonText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: screenWidth * 0.03,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: screenWidth * 0.01,
   },
   noCustomers: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+    paddingVertical: screenHeight * 0.15,
+    paddingHorizontal: screenWidth * 0.1,
   },
   noCustomersText: {
-    fontSize: 16,
+    fontSize: screenWidth * 0.04,
     color: '#64748b',
-    marginTop: 16,
+    marginTop: screenHeight * 0.02,
     textAlign: 'center',
   },
   searchContainer: {
-    marginBottom: 20,
+    marginBottom: screenHeight * 0.025,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
+    borderRadius: screenWidth * 0.03,
+    paddingHorizontal: screenWidth * 0.04,
+    paddingVertical: screenHeight * 0.015,
+    marginBottom: screenHeight * 0.02,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -640,11 +727,11 @@ const styles = StyleSheet.create({
     borderColor: '#f1f5f9',
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: screenWidth * 0.03,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: screenWidth * 0.04,
     color: '#1e293b',
   },
   filterContainer: {
@@ -653,13 +740,13 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: screenHeight * 0.015,
+    paddingHorizontal: screenWidth * 0.02,
+    borderRadius: screenWidth * 0.02,
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    marginHorizontal: 4,
+    marginHorizontal: screenWidth * 0.01,
     alignItems: 'center',
   },
   filterButtonActive: {
@@ -667,11 +754,61 @@ const styles = StyleSheet.create({
     borderColor: '#0047AB',
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: screenWidth * 0.035,
     fontWeight: '600',
     color: '#64748b',
   },
   filterButtonTextActive: {
     color: '#fff',
+  },
+  avatarContainer: {
+    marginRight: screenWidth * 0.04,
+  },
+  customerDetails: {
+    marginTop: screenHeight * 0.005,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.0025,
+  },
+  statusIndicator: {
+    position: 'absolute',
+    top: screenWidth * 0.025,
+    right: screenWidth * 0.025,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: screenWidth * 0.02,
+    paddingVertical: screenHeight * 0.005,
+    borderRadius: screenWidth * 0.015,
+  },
+  statusText: {
+    fontSize: screenWidth * 0.025,
+    fontWeight: '600',
+    marginLeft: screenWidth * 0.01,
+  },
+  statIcon: {
+    width: screenWidth * 0.08,
+    height: screenWidth * 0.08,
+    borderRadius: screenWidth * 0.04,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.005,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.015,
+  },
+  billAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.005,
+  },
+  billDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
