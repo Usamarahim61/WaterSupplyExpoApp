@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView, Dimensions, SafeAreaView, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, ScrollView as RNScrollView, useWindowDimensions, SafeAreaView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
@@ -7,10 +7,11 @@ import { useAuth } from '../AuthContext';
 import { collection, onSnapshot, query, where, addDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
 export default function AdminDashboard({ navigation }) {
   const { logout, user } = useAuth();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
+
 
   // State for staff and customers data
   const [staff, setStaff] = useState([]);
@@ -275,6 +276,367 @@ export default function AdminDashboard({ navigation }) {
     );
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#f8fafc',
+    },
+    header: {
+      marginTop: screenHeight * 0.05,
+      marginHorizontal: screenWidth * 0.05,
+      marginBottom: screenHeight * 0.02,
+    },
+    headerGradient: {
+      borderRadius: screenWidth * 0.05,
+      padding: screenWidth * 0.05,
+      elevation: 8,
+      shadowColor: '#0047AB',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerTitle: {
+      fontSize: screenWidth * 0.06,
+      fontWeight: 'bold',
+      color: '#fff',
+      marginBottom: screenHeight * 0.005,
+    },
+    headerSubtitle: {
+      fontSize: screenWidth * 0.035,
+      color: '#e0f2fe',
+      opacity: 0.9,
+    },
+    logoutButton: {
+      padding: 8,
+      borderRadius: 12,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    section: {
+      marginHorizontal: screenWidth * 0.05,
+      marginBottom: screenHeight * 0.0375,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#1e293b',
+      marginBottom: 16,
+      marginLeft: 4,
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    statCard: {
+      width: (screenWidth - screenWidth * 0.1 - 20) / 2, // Two cards per row with margins
+      marginBottom: screenHeight * 0.02,
+      borderRadius: screenWidth * 0.04,
+      elevation: 6,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+    },
+    statCardGradient: {
+      padding: 20,
+      borderRadius: 16,
+      // alignItems: 'center',
+    },
+    flexRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    statIconContainer: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      // marginRight: 16,
+    },
+    statContent: {
+      flex: 1,
+    },
+    statValue: {
+      fontSize: screenWidth * 0.05,
+      fontWeight: 'bold',
+      color: '#fff',
+      marginBottom: screenHeight * 0.005,
+    },
+    statTitle: {
+      fontSize: screenWidth * 0.03,
+      color: '#e0f2fe',
+      opacity: 0.9,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    statArrow: {
+      opacity: 0.8,
+    },
+    actionsContainer: {
+      gap: 12,
+    },
+    actionCard: {
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+    },
+    actionIconContainer: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    actionContent: {
+      flex: 1,
+    },
+    actionTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#1e293b',
+      marginBottom: 4,
+    },
+    actionSubtitle: {
+      fontSize: 14,
+      color: '#64748b',
+    },
+    activityContainer: {
+      gap: 12,
+    },
+    activityItem: {
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+    },
+    activityIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#f8fafc',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    activityContent: {
+      flex: 1,
+    },
+    activityTitle: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#1e293b',
+      marginBottom: 2,
+    },
+    activityTime: {
+      fontSize: 12,
+      color: '#64748b',
+    },
+    assignmentsContainer: {
+      gap: 12,
+    },
+    assignmentCard: {
+      borderRadius: 16,
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+    },
+    assignmentCardGradient: {
+      borderRadius: 16,
+      padding: 20,
+    },
+    assignmentHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    staffAvatar: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    staffAvatarText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 22,
+    },
+    assignmentInfo: {
+      flex: 1,
+    },
+    staffName: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#1e293b',
+      marginBottom: 4,
+    },
+    customerCount: {
+      fontSize: 14,
+      color: '#64748b',
+    },
+    customerList: {
+      marginTop: 16,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: '#f1f5f9',
+      gap: 8,
+    },
+    customerItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      justifyContent: 'space-between',
+    },
+    customerInfo: {
+      flex: 1,
+      marginLeft: 8,
+    },
+    customerName: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#1e293b',
+      marginBottom: 2,
+    },
+    customerId: {
+      fontSize: 12,
+      color: '#64748b',
+    },
+    copyButton: {
+      padding: 8,
+      borderRadius: 6,
+      backgroundColor: '#f1f5f9',
+    },
+    noCustomers: {
+      fontSize: 14,
+      color: '#64748b',
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginTop: 8,
+    },
+    noAssignments: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: screenHeight * 0.15, // Responsive height
+      paddingHorizontal: 40,
+    },
+    noAssignmentsText: {
+      fontSize: 16,
+      color: '#64748b',
+      marginTop: 16,
+      textAlign: 'center',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: '#fff',
+      borderRadius: 20,
+      width: screenWidth * 0.9, // Responsive width
+      maxHeight: screenHeight * 0.8, // Responsive height
+      elevation: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f1f5f9',
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#1e293b',
+      flex: 1,
+    },
+    closeButton: {
+      padding: 8,
+    },
+    modalBody: {
+      padding: 20,
+      maxHeight: screenHeight * 0.5, // Responsive height
+    },
+    modalLabel: {
+      fontSize: 16,
+      color: '#64748b',
+      marginBottom: 16,
+    },
+    priceInput: {
+      borderWidth: 1,
+      borderColor: '#e2e8f0',
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      marginBottom: 20,
+      color: '#1e293b',
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    modalButton: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginHorizontal: 5,
+    },
+    cancelButton: {
+      backgroundColor: '#f1f5f9',
+    },
+    saveButton: {
+      backgroundColor: '#0047AB',
+    },
+    cancelButtonText: {
+      color: '#64748b',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    saveButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -528,368 +890,3 @@ export default function AdminDashboard({ navigation }) {
     </SafeAreaView>
   );
 }
-
-
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    marginTop: screenHeight * 0.05,
-    marginHorizontal: screenWidth * 0.05,
-    marginBottom: screenHeight * 0.02,
-  },
-  headerGradient: {
-    borderRadius: screenWidth * 0.05,
-    padding: screenWidth * 0.05,
-    elevation: 8,
-    shadowColor: '#0047AB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: screenWidth * 0.06,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: screenHeight * 0.005,
-  },
-  headerSubtitle: {
-    fontSize: screenWidth * 0.035,
-    color: '#e0f2fe',
-    opacity: 0.9,
-  },
-  logoutButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  section: {
-    marginHorizontal: screenWidth * 0.05,
-    marginBottom: screenHeight * 0.0375,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: (screenWidth - screenWidth * 0.1 - 20) / 2, // Two cards per row with margins
-    marginBottom: screenHeight * 0.02,
-    borderRadius: screenWidth * 0.04,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  statCardGradient: {
-    padding: 20,
-    borderRadius: 16,
-
-    // alignItems: 'center',
-  },
-  flexRow:{
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent:"space-between"
-
-  },
-  statIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // marginRight: 16,
-  },
-  statContent: {
-    flex: 1,
-  },
-  statValue: {
-    fontSize: screenWidth * 0.05,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: screenHeight * 0.005,
-  },
-  statTitle: {
-    fontSize: screenWidth * 0.03,
-    color: '#e0f2fe',
-    opacity: 0.9,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statArrow: {
-    opacity: 0.8,
-  },
-  actionsContainer: {
-    gap: 12,
-  },
-  actionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  actionIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  actionSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  activityContainer: {
-    gap: 12,
-  },
-  activityItem: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1e293b',
-    marginBottom: 2,
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  assignmentsContainer: {
-    gap: 12,
-  },
-  assignmentCard: {
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  assignmentCardGradient: {
-    borderRadius: 16,
-    padding: 20,
-  },
-  assignmentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  staffAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  staffAvatarText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 22,
-  },
-  assignmentInfo: {
-    flex: 1,
-  },
-  staffName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  customerCount: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  customerList: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    gap: 8,
-  },
-  customerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    justifyContent: 'space-between',
-  },
-  customerInfo: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  customerName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1e293b',
-    marginBottom: 2,
-  },
-  customerId: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  copyButton: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: '#f1f5f9',
-  },
-  noCustomers: {
-    fontSize: 14,
-    color: '#64748b',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  noAssignments: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  noAssignmentsText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    width: '90%',
-    maxHeight: '80%',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    flex: 1,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  modalBody: {
-    padding: 20,
-    maxHeight: 400,
-  },
-  modalLabel: {
-    fontSize: 16,
-    color: '#64748b',
-    marginBottom: 16,
-  },
-  priceInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#1e293b',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  cancelButton: {
-    backgroundColor: '#f1f5f9',
-  },
-  saveButton: {
-    backgroundColor: '#0047AB',
-  },
-  cancelButtonText: {
-    color: '#64748b',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

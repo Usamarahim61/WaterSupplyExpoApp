@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput, useWindowDimensions, Share, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../AuthContext';
 import { collection, onSnapshot, query, where, updateDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 export default function StaffDashboard({ navigation }) {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { user, logout } = useAuth();
+
+  const styles = getStyles(screenWidth, screenHeight);
+  const viewShotRef = useRef();
 
   // State for staff data and assigned customers
   const [staffData, setStaffData] = useState(null);
@@ -18,6 +23,7 @@ export default function StaffDashboard({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all', 'pending', 'paid'
+  const [receiptData, setReceiptData] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -117,6 +123,54 @@ export default function StaffDashboard({ navigation }) {
     );
   };
 
+  const generateReceipt = async (customer, paidBills) => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const currentMonthPaidBills = paidBills.filter(bill => {
+      try {
+        const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+        return !isNaN(billDate.getTime()) && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+      } catch (error) {
+        return false;
+      }
+    });
+
+    if (currentMonthPaidBills.length === 0) {
+      Alert.alert('No Paid Bills', 'No paid bills found for the current month.');
+      return;
+    }
+
+    const totalAmount = currentMonthPaidBills.reduce((sum, bill) => sum + bill.amount, 0);
+
+    setReceiptData({
+      customer,
+      bills: currentMonthPaidBills,
+      totalAmount,
+      currentDate,
+      staffName: staffData?.name || user?.email,
+    });
+  };
+
+  const shareReceiptAsImage = async () => {
+    if (!viewShotRef.current) return;
+
+    try {
+      const uri = await viewShotRef.current.capture();
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: `Receipt for ${receiptData.customer.name}`,
+      });
+
+      setReceiptData(null);
+    } catch (error) {
+      console.error('Error sharing receipt image:', error);
+      Alert.alert('Error', 'Failed to share receipt image');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid': return '#10b981';
@@ -140,13 +194,13 @@ export default function StaffDashboard({ navigation }) {
       <TouchableOpacity style={styles.statCard} onPress={onPress}>
         <LinearGradient colors={gradient} style={styles.statCardGradient}>
           <View style={styles.statIconContainer}>
-            <Ionicons name={icon} size={32} color="#fff" />
+            <Ionicons name={icon} size={screenWidth * 0.08} color="#fff" />
           </View>
           <Text style={styles.statValue}>{value}</Text>
           <Text style={styles.statTitle}>{title}</Text>
           {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
           <View style={styles.tapIndicator}>
-            <Ionicons name="chevron-forward" size={16} color="#fff" />
+            <Ionicons name="chevron-forward" size={screenWidth * 0.04} color="#fff" />
           </View>
         </LinearGradient>
       </TouchableOpacity>
@@ -220,6 +274,15 @@ export default function StaffDashboard({ navigation }) {
               </Text>
               <Text style={styles.statLabel}>Collected</Text>
             </View>
+            {paidBills.length > 0 && (
+              <TouchableOpacity style={styles.statItem} onPress={() => generateReceipt(item, paidBills)}>
+                <View style={[styles.statIcon, { backgroundColor: '#f3e8ff' }]}>
+                  <Ionicons name="receipt-outline" size={screenWidth * 0.04} color="#8b5cf6" />
+                </View>
+                <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>Receipt</Text>
+                <Text style={styles.statLabel}>Generate</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {pendingBills.length > 0 && (
@@ -273,6 +336,7 @@ export default function StaffDashboard({ navigation }) {
   };
 
   if (loading) {
+    const styles = getStyles(screenWidth, screenHeight);
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#0047AB" />
@@ -453,11 +517,178 @@ export default function StaffDashboard({ navigation }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* Receipt Modal */}
+      <Modal
+        visible={!!receiptData}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setReceiptData(null)}
+      >
+        <View style={styles.modalFullScreen}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setReceiptData(null)}
+            >
+              <Ionicons name="close" size={24} color="#64748b" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Payment Receipt</Text>
+            <TouchableOpacity
+              style={styles.shareButtonHeader}
+              onPress={shareReceiptAsImage}
+            >
+              <Ionicons name="share-outline" size={20} color="#0047AB" />
+              <Text style={styles.shareButtonHeaderText}>Share</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.receiptScrollView}>
+            <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 0.9 }}>
+              <View style={styles.receiptContainer}>
+                {/* Header with Logo */}
+                <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.receiptHeader}>
+                  <View style={styles.receiptHeaderContent}>
+                    <View style={styles.receiptLogoContainer}>
+                      <Ionicons name="water" size={screenWidth * 0.08} color="#fff" />
+                    </View>
+                    <View style={styles.receiptTitleContainer}>
+                      <Text style={styles.receiptTitle}>Water Supply</Text>
+                      <Text style={styles.receiptSubtitle}>Payment Receipt</Text>
+                      <Text style={styles.receiptTagline}>Clean Water, Happy Life</Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+
+                <View style={styles.receiptBody}>
+                  {/* Customer Information Section */}
+                  <View style={styles.receiptSection}>
+                    <View style={styles.receiptSectionHeader}>
+                      <Ionicons name="person-circle-outline" size={screenWidth * 0.05} color="#0047AB" />
+                      <Text style={styles.receiptSectionHeaderText}>Customer Details</Text>
+                    </View>
+                    <View style={styles.receiptInfoCard}>
+                      <View style={styles.receiptInfoRow}>
+                        <Ionicons name="person-outline" size={screenWidth * 0.04} color="#64748b" />
+                        <Text style={styles.receiptInfoLabel}>Name:</Text>
+                        <Text style={styles.receiptInfoValue}>{receiptData?.customer.name}</Text>
+                      </View>
+                      <View style={styles.receiptInfoRow}>
+                        <Ionicons name="card-outline" size={screenWidth * 0.04} color="#64748b" />
+                        <Text style={styles.receiptInfoLabel} numberOfLines={1}>Connection ID:</Text>
+                        <Text style={styles.receiptInfoValue} numberOfLines={1}>{receiptData?.customer.connection}</Text>
+                      </View>
+                      <View style={styles.receiptInfoRow}>
+                        <Ionicons name="call-outline" size={screenWidth * 0.04} color="#64748b" />
+                        <Text style={styles.receiptInfoLabel}>Phone:</Text>
+                        <Text style={styles.receiptInfoValue}>{receiptData?.customer.phone}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.receiptDivider} />
+
+                  {/* Payment Details Section */}
+                  <View style={styles.receiptSection}>
+                    <View style={styles.receiptSectionHeader}>
+                      <Ionicons name="receipt-outline" size={screenWidth * 0.05} color="#0047AB" />
+                      <Text style={styles.receiptSectionHeaderText}>
+                        Payments for {receiptData?.currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </Text>
+                    </View>
+
+                    {receiptData?.bills.map((bill, index) => {
+                      const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+                      const paymentDate = bill.paymentDate?.toDate ? bill.paymentDate.toDate() : new Date();
+                      return (
+                        <View key={index} style={styles.receiptBillCard}>
+                          <View style={styles.receiptBillHeader}>
+                            <View style={styles.receiptBillIcon}>
+                              <Ionicons name="calendar-outline" size={screenWidth * 0.04} color="#0047AB" />
+                            </View>
+                            <Text style={styles.receiptBillDate}>
+                              {billDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </Text>
+                            <View style={styles.receiptBillAmount}>
+                              <Text style={styles.receiptBillAmountText}>
+                                Rs.{bill.amount.toLocaleString()}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.receiptBillFooter}>
+                            <Ionicons name="checkmark-circle" size={screenWidth * 0.035} color="#10b981" />
+                            <Text style={styles.receiptBillPaidText}>
+                              Paid on {paymentDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <View style={styles.receiptDivider} />
+
+                  {/* Total Amount Section */}
+                  <View style={styles.receiptTotalSection}>
+                    <LinearGradient colors={['#10b981', '#059669']} style={styles.receiptTotalCard}>
+                      <View style={styles.receiptTotalContent}>
+                        <Ionicons name="cash" size={screenWidth * 0.06} color="#fff" />
+                        <View style={styles.receiptTotalTextContainer}>
+                          <Text style={styles.receiptTotalLabel}>Total Amount Paid</Text>
+                          <Text style={styles.receiptTotalValue}>Rs.{receiptData?.totalAmount.toLocaleString()}</Text>
+                        </View>
+                      </View>
+                    </LinearGradient>
+                  </View>
+
+                  {/* Footer */}
+                  <View style={styles.receiptFooter}>
+                    <View style={styles.receiptFooterDivider} />
+                    <View style={styles.receiptFooterContent}>
+                      <View style={styles.receiptFooterRow}>
+                        <Ionicons name="person-outline" size={screenWidth * 0.04} color="#64748b" />
+                        <Text style={styles.receiptFooterLabel}>Generated by:</Text>
+                        <Text style={styles.receiptFooterValue}>{receiptData?.staffName}</Text>
+                      </View>
+                      <View style={styles.receiptFooterRow}>
+                        <Ionicons name="time-outline" size={screenWidth * 0.04} color="#64748b" />
+                        <Text style={styles.receiptFooterLabel}>Date:</Text>
+                        <Text style={styles.receiptFooterValue}>
+                          {receiptData?.currentDate.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.receiptThankYouSection}>
+                      <Ionicons name="heart" size={screenWidth * 0.05} color="#0047AB" />
+                      <Text style={styles.receiptThankYou}>Thank you for your payment!</Text>
+                      <Text style={styles.receiptSlogan}>Water Supply - Your Trusted Partner</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </ViewShot>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (screenWidth, screenHeight) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -516,7 +747,6 @@ const styles = StyleSheet.create({
     fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
     color: '#1e293b',
-    // marginBottom: screenHeight * 0.02,
     marginLeft: screenWidth * 0.01,
   },
   statsGrid: {
@@ -810,5 +1040,323 @@ const styles = StyleSheet.create({
   billDateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: screenWidth * 0.95,
+    maxHeight: screenHeight * 0.9,
+    backgroundColor: '#fff',
+    borderRadius: screenWidth * 0.05,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    flex: 1,
+  },
+  modalFullScreen: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: screenWidth * 0.04,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#fff',
+  },
+  closeButton: {
+    padding: screenWidth * 0.02,
+  },
+  modalTitle: {
+    fontSize: screenWidth * 0.045,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  shareButtonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: screenWidth * 0.02,
+  },
+  shareButtonHeaderText: {
+    fontSize: screenWidth * 0.035,
+    fontWeight: '600',
+    color: '#0047AB',
+    marginLeft: screenWidth * 0.01,
+  },
+  receiptScrollView: {
+    flex: 1,
+  },
+  receiptContainer: {
+    backgroundColor: '#fff',
+    borderRadius: screenWidth * 0.05,
+    overflow: 'hidden',
+  },
+  receiptHeader: {
+    padding: screenWidth * 0.06,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  receiptHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  receiptLogoContainer: {
+    marginRight: screenWidth * 0.04,
+    padding: screenWidth * 0.02,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: screenWidth * 0.03,
+  },
+  receiptTitleContainer: {
+    alignItems: 'center',
+  },
+  receiptTitle: {
+    fontSize: screenWidth * 0.06,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: screenHeight * 0.005,
+  },
+  receiptSubtitle: {
+    fontSize: screenWidth * 0.035,
+    color: '#e0f2fe',
+    textAlign: 'center',
+    opacity: 0.9,
+    marginBottom: screenHeight * 0.005,
+  },
+  receiptTagline: {
+    fontSize: screenWidth * 0.03,
+    color: '#e0f2fe',
+    textAlign: 'center',
+    opacity: 0.7,
+    fontStyle: 'italic',
+  },
+  receiptBody: {
+    padding: screenWidth * 0.06,
+  },
+  receiptSection: {
+    // marginBottom: screenHeight * 0.02,
+  },
+  receiptSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.015,
+  },
+  receiptSectionHeaderText: {
+    fontSize: screenWidth * 0.045,
+    fontWeight: 'bold',
+    color: '#0047AB',
+    marginLeft: screenWidth * 0.02,
+  },
+  receiptInfoCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: screenWidth * 0.03,
+    padding: screenWidth * 0.04,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  receiptInfoRow: {
+    flexDirection: 'row',
+    flexWrap:'nowrap',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.01,
+  },
+  receiptInfoLabel: {
+    fontSize: screenWidth * 0.04,
+    fontWeight: '600',
+    color: '#64748b',
+    width: screenWidth * 0.25,
+  },
+  receiptInfoValue: {
+    fontSize: screenWidth * 0.04,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    flex: 1,
+  },
+  receiptDivider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginVertical: screenHeight * 0.02,
+  },
+  receiptBillCard: {
+    backgroundColor: '#fefefe',
+    borderRadius: screenWidth * 0.03,
+    padding: screenWidth * 0.04,
+    marginBottom: screenHeight * 0.01,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+  },
+  receiptBillHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.01,
+  },
+  receiptBillIcon: {
+    marginRight: screenWidth * 0.03,
+  },
+  receiptBillDate: {
+    fontSize: screenWidth * 0.04,
+    fontWeight: '600',
+    color: '#1e293b',
+    flex: 1,
+  },
+  receiptBillAmount: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: screenWidth * 0.03,
+    paddingVertical: screenHeight * 0.005,
+    borderRadius: screenWidth * 0.02,
+  },
+  receiptBillAmountText: {
+    fontSize: screenWidth * 0.035,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  receiptBillFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  receiptBillPaidText: {
+    fontSize: screenWidth * 0.035,
+    color: '#10b981',
+    marginLeft: screenWidth * 0.02,
+    fontWeight: '500',
+  },
+  receiptTotalSection: {
+    // marginVertical: screenHeight * 0.02,
+  },
+  receiptTotalCard: {
+    borderRadius: screenWidth * 0.04,
+    padding: screenWidth * 0.05,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  receiptTotalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  receiptTotalTextContainer: {
+    marginLeft: screenWidth * 0.04,
+  },
+  receiptTotalLabel: {
+    fontSize: screenWidth * 0.04,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  receiptTotalValue: {
+    fontSize: screenWidth * 0.055,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: screenHeight * 0.005,
+  },
+  receiptFooter: {
+    marginTop: screenHeight * 0.02,
+    paddingTop: screenHeight * 0.02,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  receiptFooterDivider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    width: '100%',
+    marginBottom: screenHeight * 0.02,
+  },
+  receiptFooterContent: {
+    width: '100%',
+  },
+  receiptFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.01,
+  },
+  receiptFooterLabel: {
+    fontSize: screenWidth * 0.035,
+    color: '#64748b',
+    width: screenWidth * 0.25,
+  },
+  receiptFooterValue: {
+    fontSize: screenWidth * 0.035,
+    fontWeight: '600',
+    color: '#1e293b',
+    flex: 1,
+  },
+  receiptThankYouSection: {
+    marginTop: screenHeight * 0.02,
+    alignItems: 'center',
+    backgroundColor: '#f0f9ff',
+    padding: screenWidth * 0.04,
+    borderRadius: screenWidth * 0.03,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
+  },
+  receiptThankYou: {
+    fontSize: screenWidth * 0.045,
+    fontWeight: 'bold',
+    color: '#0047AB',
+    marginTop: screenHeight * 0.01,
+    textAlign: 'center',
+  },
+  receiptSlogan: {
+    fontSize: screenWidth * 0.035,
+    color: '#64748b',
+    marginTop: screenHeight * 0.005,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: screenWidth * 0.06,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  modalButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: screenHeight * 0.015,
+    borderRadius: screenWidth * 0.03,
+    marginHorizontal: screenWidth * 0.02,
+  },
+  cancelButton: {
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  cancelButtonText: {
+    fontSize: screenWidth * 0.04,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  shareButton: {
+    backgroundColor: '#0047AB',
+  },
+  shareButtonText: {
+    fontSize: screenWidth * 0.04,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: screenWidth * 0.02,
   },
 });

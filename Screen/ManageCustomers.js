@@ -564,52 +564,51 @@ export default function ManageCustomers({ navigation }) {
         visible={modalVisible}
         onRequestClose={closeModal}
       >
-        <Animated.View
-          style={[
-            styles.modalOverlay,
-            {
-              opacity: modalAnim,
-            },
-          ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalContainer}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.modalContainer}
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            onPress={closeModal}
+            activeOpacity={1}
+          />
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [
+                  {
+                    translateY: modalAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [600, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
           >
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  transform: [
-                    {
-                      translateY: modalAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [600, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
+            <LinearGradient
+              colors={["#0047AB", "#0284c7"]}
+              style={styles.modalHeader}
             >
-              <LinearGradient
-                colors={["#0047AB", "#0284c7"]}
-                style={styles.modalHeader}
+              <Text style={styles.modalTitle}>
+                {isEditing ? "Edit Customer" : "Register New Customer"}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeModal}
               >
-                <Text style={styles.modalTitle}>
-                  {isEditing ? "Edit Customer" : "Register New Customer"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={closeModal}
-                >
-                  <Ionicons name="close" size={24} color="#fff" />
-                </TouchableOpacity>
-              </LinearGradient>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
 
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                style={styles.modalBody}
-              >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name</Text>
                   <TextInput
@@ -709,10 +708,9 @@ export default function ManageCustomers({ navigation }) {
                     <Ionicons name="checkmark" size={20} color="#fff" />
                   </LinearGradient>
                 </TouchableOpacity>
-              </ScrollView>
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </Animated.View>
+            </ScrollView>
+          </Animated.View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -959,11 +957,12 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
   },
-  modalContainer: {
+  modalBackdrop: {
     flex: 1,
-    justifyContent: "flex-end",
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   modalContent: {
     backgroundColor: "#fff",
