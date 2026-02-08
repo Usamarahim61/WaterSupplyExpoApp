@@ -21,6 +21,9 @@ export default function AdminDashboard({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedStaffCustomers, setSelectedStaffCustomers] = useState([]);
   const [selectedStaffName, setSelectedStaffName] = useState('');
+  const [selectedStaffRevenue, setSelectedStaffRevenue] = useState({});
+  const [revenueModalVisible, setRevenueModalVisible] = useState(false);
+  const [selectedStaffHistory, setSelectedStaffHistory] = useState({});
   const [pendingBills, setPendingBills] = useState(0);
   const [fixedPrice, setFixedPrice] = useState(1000);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -80,16 +83,47 @@ export default function AdminDashboard({ navigation }) {
     };
   }, [user]);
 
-  // Process staff assignments and pending bills when staff or customers change
+  // Process staff assignments, revenue, and pending bills when staff, customers, or bills change
   useEffect(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
     const assignments = staff.map((staffMember) => {
       const assignedCustomers = customers.filter(
         (customer) => customer.assignedTo === staffMember.uid
       );
+
+      // Calculate current month revenue
+      const currentMonthRevenue = assignedCustomers.reduce((total, customer) => {
+        const customerBills = bills.filter(bill => bill.customerId === customer.id && bill.status === 'paid');
+        const currentMonthBills = customerBills.filter(bill => {
+          const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+          return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+        });
+        return total + currentMonthBills.reduce((sum, bill) => sum + bill.amount, 0);
+      }, 0);
+
+      // Calculate monthly revenue history
+      const monthlyHistory = {};
+      assignedCustomers.forEach(customer => {
+        const customerBills = bills.filter(bill => bill.customerId === customer.id && bill.status === 'paid');
+        customerBills.forEach(bill => {
+          const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+          const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
+          if (!monthlyHistory[monthKey]) {
+            monthlyHistory[monthKey] = 0;
+          }
+          monthlyHistory[monthKey] += bill.amount;
+        });
+      });
+
       return {
         ...staffMember,
         customerCount: assignedCustomers.length,
         customers: assignedCustomers,
+        currentRevenue: currentMonthRevenue,
+        monthlyHistory,
       };
     });
     setStaffAssignments(assignments);
@@ -97,7 +131,7 @@ export default function AdminDashboard({ navigation }) {
     // Calculate pending bills using the fixed price from backend
     const pendingAmount = customers.length * fixedPrice;
     setPendingBills(pendingAmount);
-  }, [staff, customers, fixedPrice]);
+  }, [staff, customers, bills, fixedPrice]);
 
   const handleNavigation = (navigate) => {
     navigation.navigate(navigate);
@@ -254,6 +288,12 @@ export default function AdminDashboard({ navigation }) {
       setModalVisible(true);
     };
 
+    const handleRevenuePress = () => {
+      setSelectedStaffName(item.name);
+      setSelectedStaffHistory(item.monthlyHistory);
+      setRevenueModalVisible(true);
+    };
+
     return (
       <TouchableOpacity
         style={styles.assignmentCard}
@@ -268,8 +308,17 @@ export default function AdminDashboard({ navigation }) {
             <View style={styles.assignmentInfo}>
               <Text style={styles.staffName}>{item.name}</Text>
               <Text style={styles.customerCount}>{item.customerCount} customers assigned</Text>
+              <Text style={styles.revenueText}>Current Month: Rs.{item.currentRevenue.toLocaleString()}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#64748b" />
+            <View style={styles.assignmentActions}>
+              <TouchableOpacity
+                style={styles.revenueButton}
+                onPress={handleRevenuePress}
+              >
+                <Ionicons name="cash-outline" size={20} color="#10b981" />
+              </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={24} color="#64748b" />
+            </View>
           </View>
         </LinearGradient>
       </TouchableOpacity>
@@ -504,6 +553,24 @@ export default function AdminDashboard({ navigation }) {
       fontSize: 14,
       color: '#64748b',
     },
+    revenueText: {
+      fontSize: 12,
+      color: '#10b981',
+      fontWeight: '600',
+      marginTop: 2,
+    },
+    assignmentActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    revenueButton: {
+      padding: 8,
+      borderRadius: 6,
+      backgroundColor: '#f0fdf4',
+      borderWidth: 1,
+      borderColor: '#dcfce7',
+    },
     customerList: {
       marginTop: 16,
       paddingTop: 16,
@@ -528,6 +595,14 @@ export default function AdminDashboard({ navigation }) {
       marginBottom: 2,
     },
     customerId: {
+      fontSize: 12,
+      color: '#64748b',
+    },
+    customerPhone: {
+      fontSize: 12,
+      color: '#64748b',
+    },
+    customerCnic: {
       fontSize: 12,
       color: '#64748b',
     },
@@ -633,6 +708,43 @@ export default function AdminDashboard({ navigation }) {
     saveButtonText: {
       color: '#fff',
       fontSize: 16,
+      fontWeight: '600',
+    },
+    revenueItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f1f5f9',
+    },
+    revenueInfo: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    revenueMonth: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#1e293b',
+    },
+    revenueAmount: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#10b981',
+    },
+    noRevenue: {
+      fontSize: 14,
+      color: '#64748b',
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginTop: 8,
+    },
+    billStatusContainer: {
+      marginTop: 4,
+    },
+    billStatusText: {
+      fontSize: 12,
       fontWeight: '600',
     },
   });
@@ -818,21 +930,44 @@ export default function AdminDashboard({ navigation }) {
             </View>
             <RNScrollView style={styles.modalBody}>
               {selectedStaffCustomers && selectedStaffCustomers.length > 0 ? (
-                selectedStaffCustomers.map((customer) => (
-                  <View key={customer.id} style={styles.customerItem}>
-                    <Ionicons name="person" size={16} color="#0047AB" />
-                    <View style={styles.customerInfo}>
-                      <Text style={styles.customerName}>{customer.name}</Text>
-                      <Text style={styles.customerId}>ID: {customer.connection}</Text>
+                selectedStaffCustomers.map((customer) => {
+                  const currentDate = new Date();
+                  const currentMonth = currentDate.getMonth();
+                  const currentYear = currentDate.getFullYear();
+
+                  const customerBills = bills.filter(bill => bill.customerId === customer.id);
+                  const currentMonthBill = customerBills.find(bill => {
+                    const billDate = bill.billDate?.toDate ? bill.billDate.toDate() : new Date(bill.billDate);
+                    return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+                  });
+
+                  const billStatus = currentMonthBill ? currentMonthBill.status : 'no bill';
+                  const statusColor = billStatus === 'paid' ? '#10b981' : billStatus === 'pending' ? '#f59e0b' : '#ef4444';
+                  const statusText = billStatus === 'paid' ? 'Paid' : billStatus === 'pending' ? 'Pending' : 'No Bill';
+
+                  return (
+                    <View key={customer.id} style={styles.customerItem}>
+                      <Ionicons name="person" size={16} color="#0047AB" />
+                      <View style={styles.customerInfo}>
+                        <Text style={styles.customerName}>{customer.name}</Text>
+                        <Text style={styles.customerId}>ID: {customer.connection}</Text>
+                        <Text style={styles.customerPhone}>Phone: {customer.phone || 'N/A'}</Text>
+                        <Text style={styles.customerCnic}>CNIC: {customer.cnic || 'N/A'}</Text>
+                        <View style={styles.billStatusContainer}>
+                          <Text style={[styles.billStatusText, { color: statusColor }]}>
+                            Current Month: {statusText}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copyToClipboard(customer.connection)}
+                      >
+                        <Ionicons name="copy-outline" size={16} color="#0047AB" />
+                      </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.copyButton}
-                      onPress={() => copyToClipboard(customer.connection)}
-                    >
-                      <Ionicons name="copy-outline" size={16} color="#0047AB" />
-                    </TouchableOpacity>
-                  </View>
-                ))
+                  );
+                })
               ) : (
                 <Text style={styles.noCustomers}>No customers assigned</Text>
               )}

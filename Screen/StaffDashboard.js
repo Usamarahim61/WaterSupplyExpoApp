@@ -248,6 +248,13 @@ export default function StaffDashboard({ navigation }) {
                 </View>
               )}
             </View>
+            {paidBills.length > 0 && (
+              <View style={styles.receiptIndicator}>
+                <TouchableOpacity onPress={() => generateReceipt(item, paidBills)}>
+                  <Ionicons name="receipt-outline" size={screenWidth * 0.05} color="#8b5cf6" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={styles.customerStats}>
@@ -274,7 +281,7 @@ export default function StaffDashboard({ navigation }) {
               </Text>
               <Text style={styles.statLabel}>Collected</Text>
             </View>
-            {paidBills.length > 0 && (
+            {/* {paidBills.length > 0 && (
               <TouchableOpacity style={styles.statItem} onPress={() => generateReceipt(item, paidBills)}>
                 <View style={[styles.statIcon, { backgroundColor: '#f3e8ff' }]}>
                   <Ionicons name="receipt-outline" size={screenWidth * 0.04} color="#8b5cf6" />
@@ -282,7 +289,7 @@ export default function StaffDashboard({ navigation }) {
                 <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>Receipt</Text>
                 <Text style={styles.statLabel}>Generate</Text>
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
 
           {pendingBills.length > 0 && (
@@ -1005,6 +1012,11 @@ const getStyles = (screenWidth, screenHeight) => StyleSheet.create({
   statusIndicator: {
     position: 'absolute',
     top: screenWidth * 0.025,
+    right: screenWidth * 0.025,
+  },
+  receiptIndicator: {
+    position: 'absolute',
+    bottom: screenWidth * 0.025,
     right: screenWidth * 0.025,
   },
   statusBadge: {

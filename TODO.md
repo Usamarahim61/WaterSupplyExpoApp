@@ -7,6 +7,7 @@
 - [x] Implement receipt generation and sharing functionality for staff on paid bills of current month.
 - [x] Fix receipt sharing error by simplifying share function to directly share captured image URI.
 - [x] Prevent text wrapping in receipt by adding numberOfLines={1} and flexWrap:'nowrap' to receipt info rows.
+- [x] Move receipt icon to the corner (bottom right) of customer cards for better visibility.
 
 ## Followup Steps
 - [ ] Test assigning and unassigning customers to verify messages display correctly and assignments update properly.
@@ -38,3 +39,18 @@
 
 ## Followup Steps
 - [ ] Test the receipt generation and sharing functionality to ensure it works correctly.
+
+# Admin Staff Revenue Feature
+
+## Completed Tasks
+- [x] Added logic to calculate current month revenue for each staff member based on their assigned customers' paid bills.
+- [x] Added logic to calculate monthly revenue history for each staff member.
+- [x] Updated StaffAssignmentCard to display current month revenue.
+- [x] Added revenue button (cash icon) to each staff card that opens a modal showing revenue history.
+- [x] Created Revenue History Modal that displays monthly revenue for each staff member, sorted by month descending.
+- [x] Added responsive styles for the new revenue display elements.
+
+## Followup Steps
+- [ ] Test the revenue calculations with sample data to ensure accuracy.
+- [ ] Verify the modal displays correctly on different screen sizes.
+- [ ] Test with staff members who have no revenue history to ensure proper empty state handling.
