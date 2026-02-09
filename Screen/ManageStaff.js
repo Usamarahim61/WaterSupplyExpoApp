@@ -525,41 +525,51 @@ export default function ManageStaff({ navigation }) {
         visible={modalVisible}
         onRequestClose={closeModal}
       >
-        <Animated.View
-          style={[
-            styles.modalOverlay,
-            {
-              opacity: modalAnim,
-            },
-          ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalContainer}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.modalContainer}
-          >
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  transform: [{
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            onPress={closeModal}
+            activeOpacity={1}
+          />
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [
+                  {
                     translateY: modalAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [600, 0],
                     }),
-                  }],
-                },
-              ]}
+                  },
+                ],
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={["#0047AB", "#0284c7"]}
+              style={styles.modalHeader}
             >
-              <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {isEditing ? "Edit Staff" : "Register New Staff"}
-                </Text>
-                <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-                  <Ionicons name="close" size={24} color="#fff" />
-                </TouchableOpacity>
-              </LinearGradient>
+              <Text style={styles.modalTitle}>
+                {isEditing ? "Edit Staff" : "Register New Staff"}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeModal}
+              >
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
 
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name</Text>
                   <TextInput
@@ -635,18 +645,24 @@ export default function ManageStaff({ navigation }) {
                   />
                 </View>
 
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSaveStaff} activeOpacity={0.8}>
-                  <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.submitGradient}>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  onPress={handleSaveStaff}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={["#0047AB", "#0284c7"]}
+                    style={styles.submitGradient}
+                  >
                     <Text style={styles.submitBtnText}>
                       {isEditing ? "Update Staff" : "Register Staff"}
                     </Text>
                     <Ionicons name="checkmark" size={20} color="#fff" />
                   </LinearGradient>
                 </TouchableOpacity>
-              </ScrollView>
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </Animated.View>
+            </ScrollView>
+          </Animated.View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -717,14 +733,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 16,
-    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    margin: width * 0.05,
+    borderRadius: width * 0.04,
+    height: height * 0.07,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
@@ -884,10 +900,11 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 4,
   },
-  modalOverlay: {
+  modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   modalContainer: {
     flex: 1,
