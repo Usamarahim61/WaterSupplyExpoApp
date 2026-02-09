@@ -28,6 +28,8 @@ export default function AdminDashboard({ navigation }) {
   const [fixedPrice, setFixedPrice] = useState(1000);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [newPrice, setNewPrice] = useState('');
+  const [autoBillGeneration, setAutoBillGeneration] = useState(false);
+  const [autoBillModalVisible, setAutoBillModalVisible] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -72,8 +74,10 @@ export default function AdminDashboard({ navigation }) {
       if (!snapshot.empty) {
         const settingsData = snapshot.docs[0].data();
         setFixedPrice(settingsData.fixedPrice || 1000);
+        setAutoBillGeneration(settingsData.autoBillGeneration || false);
       } else {
         setFixedPrice(1000);
+        setAutoBillGeneration(false);
       }
     });
     unsubscribes.push(settingsUnsubscribe);
@@ -247,6 +251,31 @@ export default function AdminDashboard({ navigation }) {
     } catch (error) {
       console.error('Error updating price:', error);
       Alert.alert('Error', 'Failed to update price. Please try again.');
+    }
+  };
+
+  const toggleAutoBillGeneration = async () => {
+    try {
+      const settingsRef = collection(db, "settings");
+      const settingsSnapshot = await getDocs(settingsRef);
+
+      const newValue = !autoBillGeneration;
+
+      if (!settingsSnapshot.empty) {
+        // Update existing settings document
+        const settingsDoc = settingsSnapshot.docs[0];
+        await updateDoc(settingsDoc.ref, { autoBillGeneration: newValue });
+      } else {
+        // Create new settings document
+        await addDoc(settingsRef, { autoBillGeneration: newValue, fixedPrice: fixedPrice });
+      }
+
+      setAutoBillGeneration(newValue);
+      setAutoBillModalVisible(false);
+      Alert.alert('Success', `Auto bill generation ${newValue ? 'enabled' : 'disabled'} successfully.`);
+    } catch (error) {
+      console.error('Error toggling auto bill generation:', error);
+      Alert.alert('Error', 'Failed to update auto bill generation setting. Please try again.');
     }
   };
 
@@ -841,6 +870,13 @@ export default function AdminDashboard({ navigation }) {
               color="#8b5cf6"
             />
             <ActionCard
+              icon="time-outline"
+              title="Auto Bill Generation"
+              subtitle={autoBillGeneration ? 'Enabled - Bills generate on 1st of every month' : 'Disabled - Manual generation only'}
+              onPress={() => setAutoBillModalVisible(true)}
+              color="#10b981"
+            />
+            <ActionCard
               icon="document-text"
               title="Manage Bills"
               subtitle="View and delete current month bills"
@@ -1016,6 +1052,52 @@ export default function AdminDashboard({ navigation }) {
                   onPress={saveNewPrice}
                 >
                   <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Auto Bill Generation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={autoBillModalVisible}
+        onRequestClose={() => setAutoBillModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Auto Bill Generation</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setAutoBillModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.modalLabel}>
+                Current Status: {autoBillGeneration ? 'Enabled' : 'Disabled'}
+              </Text>
+              <Text style={styles.modalLabel}>
+                When enabled, bills will be automatically generated for all customers on the 1st day of every month at midnight.
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setAutoBillModalVisible(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={toggleAutoBillGeneration}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {autoBillGeneration ? 'Disable' : 'Enable'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
