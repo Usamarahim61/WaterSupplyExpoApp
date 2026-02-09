@@ -133,7 +133,7 @@ export default function ManageStaff({ navigation }) {
     setSelectedStaffId(item.id);
     setStaffData({
       name: item.name,
-      email: item.email,
+      email: item.email.toLowerCase(),
       password: '', // Don't populate password for editing
       cnic: item.cnic,
       phone: item.phone,
@@ -590,7 +590,7 @@ export default function ManageStaff({ navigation }) {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={staffData.email}
-                    onChangeText={(val) => setStaffData({...staffData, email: val})}
+                    onChangeText={(val) => setStaffData({...staffData, email: val.toLowerCase()})}
                   />
                 </View>
 

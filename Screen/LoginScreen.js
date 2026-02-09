@@ -88,7 +88,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
       // Navigation will be handled by AuthContext
     } catch (error) {
       setError(error.message);
