@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../AuthContext';
 
@@ -261,6 +261,29 @@ export default function ManageStaff({ navigation }) {
     }
   };
 
+  // Handle Password Reset
+  const handlePasswordReset = async (email) => {
+    Alert.alert(
+      "Reset Password",
+      `Send password reset email to ${email}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Send Reset Email",
+          onPress: async () => {
+            try {
+              await sendPasswordResetEmail(auth, email);
+              Alert.alert("Success", "Password reset email sent successfully!");
+            } catch (error) {
+              console.error("Error sending password reset email:", error);
+              Alert.alert("Error", "Failed to send password reset email. Please try again.");
+            }
+          },
+        }
+      ]
+    );
+  };
+
   // Filter List based on Search and Status
   const filteredStaff = staff.filter(
     (c) => {
@@ -338,6 +361,12 @@ export default function ManageStaff({ navigation }) {
                 onPress={() => openEditModal(item)}
               >
                 <Ionicons name="create-outline" size={20} color="#0047AB" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconBtn, styles.resetBtn]}
+                onPress={() => handlePasswordReset(item.email)}
+              >
+                <Ionicons name="key-outline" size={20} color="#8b5cf6" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.iconBtn, item.status === 'Active' ? styles.deactivateBtn : styles.activateBtn]}
@@ -850,6 +879,9 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  resetBtn: {
+    backgroundColor: "rgba(139, 92, 246, 0.1)",
   },
   emptyContainer: {
     alignItems: 'center',
