@@ -50,7 +50,7 @@ export default function ManageCustomers({ navigation }) {
   // Form State
   const [customerData, setCustomerData] = useState({
     name: "",
-    email: "",
+    whatsapp: "",
     cnic: "",
     phone: "",
     address: "",
@@ -136,7 +136,7 @@ export default function ManageCustomers({ navigation }) {
     setIsEditing(false);
     setCustomerData({
       name: "",
-      email: "",
+      whatsapp: "",
       cnic: "",
       phone: "",
       address: "",
@@ -157,7 +157,7 @@ export default function ManageCustomers({ navigation }) {
     setSelectedCustomerId(item.id);
     setCustomerData({
       name: item.name,
-      email: item.email,
+      whatsapp: item.whatsapp,
       cnic: item.cnic,
       phone: item.phone,
       address: item.address,
@@ -184,8 +184,8 @@ export default function ManageCustomers({ navigation }) {
 
   // Handle Save (Both Create and Update)
   const handleSaveCustomer = async () => {
-    if (!customerData.name || !customerData.connectionNo) {
-      Alert.alert("Error", "Please fill in Name and Connection Number");
+    if (!customerData.name || !customerData.cnic || !customerData.phone || !customerData.whatsapp || !customerData.address || !customerData.connectionNo) {
+      Alert.alert("Error", "Please fill in all required fields: Name, CNIC,Whatsapp No Phone, Address, and Connection Number");
       return;
     }
 
@@ -195,7 +195,7 @@ export default function ManageCustomers({ navigation }) {
         const customerRef = doc(db, "customers", selectedCustomerId);
         await updateDoc(customerRef, {
           name: customerData.name,
-          email: customerData.email,
+          whatsapp: customerData.whatsapp,
           cnic: customerData.cnic,
           phone: customerData.phone,
           address: customerData.address,
@@ -206,7 +206,7 @@ export default function ManageCustomers({ navigation }) {
         // Add new customer to Firebase
         await addDoc(collection(db, "customers"), {
           name: customerData.name,
-          email: customerData.email,
+          whatsapp: customerData.whatsapp,
           cnic: customerData.cnic,
           phone: customerData.phone,
           address: customerData.address,
@@ -220,7 +220,7 @@ export default function ManageCustomers({ navigation }) {
       closeModal();
       setCustomerData({
         name: "",
-        email: "",
+        whatsapp: "",
         cnic: "",
         phone: "",
         address: "",
@@ -278,7 +278,7 @@ export default function ManageCustomers({ navigation }) {
     (c) => {
       const matchesSearch =
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.email?.toLowerCase().includes(search.toLowerCase()) ||
+        c.whatsapp?.toLowerCase().includes(search.toLowerCase()) ||
         c.connection.toLowerCase().includes(search.toLowerCase());
       const matchesStatus =
         filterStatus === 'all' ||
@@ -331,7 +331,7 @@ export default function ManageCustomers({ navigation }) {
                   </View>
                 </View>
                 <Text style={styles.customerSub}>ID: {item.connection}</Text>
-                <Text style={styles.customerEmail}>{item.email}</Text>
+                <Text style={styles.customerEmail}>{item.whatsapp}</Text>
                 <Text style={styles.customerPhone}>{item.phone}</Text>
                 {item.createdAt && (
                   <Text style={styles.customerDate}>
@@ -623,16 +623,15 @@ export default function ManageCustomers({ navigation }) {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Email</Text>
+                  <Text style={styles.inputLabel}>WhatsApp Number</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="customer@example.com"
+                    placeholder="03XX-XXXXXXX"
                     placeholderTextColor="#64748b"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={customerData.email}
+                    keyboardType="phone-pad"
+                    value={customerData.whatsapp}
                     onChangeText={(val) =>
-                      setCustomerData({ ...customerData, email: val })
+                      setCustomerData({ ...customerData, whatsapp: val })
                     }
                   />
                 </View>
