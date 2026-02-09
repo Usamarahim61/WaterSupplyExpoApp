@@ -928,7 +928,7 @@ export default function AdminDashboard({ navigation }) {
                 <Ionicons name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
-            <RNScrollView style={styles.modalBody}>
+            <RNScrollView style={styles.modalBody} contentContainerStyle={{ paddingBottom: 50 }}>
               {selectedStaffCustomers && selectedStaffCustomers.length > 0 ? (
                 selectedStaffCustomers.map((customer) => {
                   const currentDate = new Date();
