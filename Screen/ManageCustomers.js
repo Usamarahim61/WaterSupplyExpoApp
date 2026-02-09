@@ -559,7 +559,7 @@ export default function ManageCustomers({ navigation }) {
 
       {/* Add/Edit Modal */}
       <Modal
-        animationType="none"
+        animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={closeModal}
@@ -582,7 +582,7 @@ export default function ManageCustomers({ navigation }) {
                   {
                     translateY: modalAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [600, 0],
+                      outputRange: [100, 0],
                     }),
                   },
                 ],
@@ -795,17 +795,17 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: "row",
+    flexWrap: 'wrap',
     justifyContent: "space-around",
-    // height: height * 0.12,
     marginHorizontal: width * 0.02,
     marginBottom: height * 0.025,
   },
   statItem: {
     // flex: 1,
-    width: (width - width * 0.1) / 3,
+    width: (width - width * 0.20) / 3,
     flexDirection: "column",
     alignItems: "center",
-    marginHorizontal: width * 0.01,
+    marginHorizontal: width * 0.005,
     marginBottom: 16,
     borderRadius: 16,
     elevation: 6,
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    padding: 6,
+    padding: Math.max(4, width * 0.01),
   },
   statItemTouchable: {
     borderRadius: 16,
@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 70,
   },
   modalContent: {
     backgroundColor: "#fff",

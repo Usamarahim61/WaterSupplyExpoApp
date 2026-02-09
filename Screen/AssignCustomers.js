@@ -25,6 +25,7 @@ export default function AssignCustomers({ navigation, route }) {
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'assigned', 'unassigned'
+  const [assignCount, setAssignCount] = useState('');
 
   useEffect(() => {
     // Fetch staff and customers from Firebase
@@ -107,6 +108,26 @@ export default function AssignCustomers({ navigation, route }) {
     } else {
       setSelectedCustomers([...selectedCustomers, id]);
     }
+  };
+
+  // Select a specific count of unassigned customers randomly
+  const selectCountUnassigned = () => {
+    const count = parseInt(assignCount);
+    if (isNaN(count) || count <= 0) {
+      Alert.alert("Invalid Input", "Please enter a positive number.");
+      return;
+    }
+
+    const unassignedCustomers = filteredCustomers.filter(c => !c.assignedTo);
+    if (count > unassignedCustomers.length) {
+      Alert.alert("Not Enough Customers", `There are only ${unassignedCustomers.length} unassigned customers available.`);
+      return;
+    }
+
+    // Shuffle the unassigned customers and select the first 'count'
+    const shuffled = [...unassignedCustomers].sort(() => 0.5 - Math.random());
+    const selectedIds = shuffled.slice(0, count).map(c => c.id);
+    setSelectedCustomers(selectedIds);
   };
 
   const handleAssign = async () => {
@@ -263,6 +284,25 @@ export default function AssignCustomers({ navigation, route }) {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Count-Based Selection */}
+        {filterStatus === 'unassigned' && filteredCustomers.length > 0 && (
+          <View style={styles.countContainer}>
+            <View style={styles.countInputContainer}>
+              <TextInput
+                style={styles.countInput}
+                placeholder="Enter count"
+                value={assignCount}
+                onChangeText={setAssignCount}
+                keyboardType="numeric"
+                placeholderTextColor="#64748b"
+              />
+            </View>
+            <TouchableOpacity style={styles.selectCountButton} onPress={selectCountUnassigned}>
+              <Text style={styles.selectCountButtonText}>Select {assignCount || 0} Unassigned</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Bulk Selection Controls */}
         {filterStatus === 'unassigned' && filteredCustomers.length > 0 && (
@@ -663,6 +703,43 @@ const styles = StyleSheet.create({
   },
   activeFilterText: {
     color: '#fff',
+  },
+  countContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    gap: 10,
+  },
+  countInputContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  countInput: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  selectCountButton: {
+    backgroundColor: '#0047AB',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 2,
+  },
+  selectCountButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   bulkActions: {
     flexDirection: 'row',
