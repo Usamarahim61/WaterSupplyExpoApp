@@ -978,6 +978,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+     marginBottom:10
   },
   modalTitle: {
     fontSize: 20,
@@ -993,8 +994,14 @@ const styles = StyleSheet.create({
   modalBody: {
     padding: 20,
   },
+    modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    margin:10
+  },
   inputGroup: {
     marginBottom: 20,
+    paddingInline: 20
   },
   inputLabel: {
     fontSize: 16,

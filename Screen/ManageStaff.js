@@ -945,6 +945,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
+    margin:10
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -961,6 +962,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    marginBottom:10
   },
   modalTitle: {
     fontSize: 20,
@@ -978,6 +980,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 20,
+    paddingInline: 20
   },
   inputLabel: {
     fontSize: 16,

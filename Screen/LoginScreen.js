@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Animated, Dimensions
+  StyleSheet, Text, View, TextInput, TouchableOpacity, 
+  Animated, Dimensions, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,16 +17,15 @@ export default function LoginScreen({ navigation }) {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const waveAnim1 = useRef(new Animated.Value(0)).current;
-  const waveAnim2 = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const waterLevel = useRef(new Animated.Value(0)).current;
+  const bubbleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Entrance Animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -37,47 +37,22 @@ export default function LoginScreen({ navigation }) {
         duration: 800,
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
+      // Logo "Filling Up" animation
+      Animated.timing(waterLevel, {
         toValue: 1,
-        tension: 10,
-        friction: 3,
-        useNativeDriver: true,
-      }),
+        duration: 2000,
+        useNativeDriver: false,
+      })
     ]).start();
 
-    // Wave animations
-    const animateWaves = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(waveAnim1, {
-            toValue: 1,
-            duration: 4000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(waveAnim1, {
-            toValue: 0,
-            duration: 4000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(waveAnim2, {
-            toValue: 1,
-            duration: 5000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(waveAnim2, {
-            toValue: 0,
-            duration: 5000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    };
-    animateWaves();
+    // Floating bubbles animation loop
+    Animated.loop(
+      Animated.timing(bubbleAnim, {
+        toValue: 1,
+        duration: 4000,
+        useNativeDriver: true,
+      })
+    ).start();
   }, []);
 
   const handleLogin = async () => {
@@ -88,8 +63,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
-      // Navigation will be handled by AuthContext
+      await signInWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -97,232 +71,319 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  // Interpolate water height for the logo
+  const liquidHeight = waterLevel.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '70%'],
+  });
+
   return (
     <View style={styles.container}>
-      {/* Animated Background Waves */}
-      <Animated.View
-        style={[
-          styles.wave1,
-          {
-            transform: [
-              {
-                translateX: waveAnim1.interpolate({
+      {/* Background Bubbles */}
+      {[...Array(6)].map((_, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.bubble,
+            {
+              left: (width / 6) * i + 20,
+              opacity: bubbleAnim.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [0, 0.3, 0],
+              }),
+              transform: [{
+                translateY: bubbleAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [-width, width],
-                }),
-              },
-            ],
-          },
-        ]}
-      >
-        <LinearGradient colors={['rgba(14, 165, 233, 0.15)', 'rgba(56, 189, 248, 0.08)']} style={styles.waveShape} />
-      </Animated.View>
+                  outputRange: [height, -100],
+                })
+              }]
+            }
+          ]}
+        />
+      ))}
 
-      <Animated.View
-        style={[
-          styles.wave2,
-          {
-            transform: [
-              {
-                translateX: waveAnim2.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [width, -width],
-                }),
-              },
-            ],
-          },
-        ]}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <LinearGradient colors={['rgba(6, 182, 212, 0.12)', 'rgba(14, 165, 233, 0.06)']} style={styles.waveShape} />
-      </Animated.View>
+        <LinearGradient
+          colors={['#075985', '#0047AB', '#f0f9ff']}
+          style={styles.headerBackground}
+        >
+          <SafeAreaView style={styles.headerContent}>
+            {/* Custom Animated Water Drop Logo */}
+            <View style={styles.logoOuter}>
+               <View style={styles.dropShape}>
+                  <Animated.View style={[styles.liquid, { height: liquidHeight }]}>
+                    <LinearGradient 
+                      colors={['#38bdf8', '#0284c7']} 
+                      style={styles.fill} 
+                    />
+                  </Animated.View>
+                  <Ionicons name="water" size={45} color="#fff" style={styles.logoIcon} />
+               </View>
+            </View>
 
-      {/* Header Section */}
-      <Animated.View
-        style={[
-          styles.headerSection,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        <LinearGradient colors={['#0047AB', '#0047AB', '#0284c7']} style={styles.headerGradient}>
-          <SafeAreaView style={styles.logoContainer}>
-            <Animated.View
-              style={[
-                styles.logoBox,
-                {
-                  transform: [{ scale: scaleAnim }],
-                },
-              ]}
-            >
-              <Ionicons name="water" size={50} color="#fff" />
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center' }}>
+              <Text style={styles.headerTitle}>Nehmat Water Supply</Text>
+              <Text style={styles.headerSubtitle}>Nehmat Water Supply System</Text>
             </Animated.View>
-            <Text style={styles.headerTitle}>Water Supply</Text>
-            <Text style={styles.headerSubtitle}>
-              Smart Water Supply Management System
-            </Text>
           </SafeAreaView>
         </LinearGradient>
-      </Animated.View>
 
-      {/* Form Section */}
-      <Animated.View
-        style={[
-          styles.formContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        <View style={styles.formCard}>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
-          <Text style={styles.welcomeSubtext}>Sign in to continue</Text>
+        <Animated.View
+          style={[
+            styles.formContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <View style={styles.formCard}>
+            <Text style={styles.welcomeText}>Welcome Back</Text>
+            <Text style={styles.welcomeSubtext}>Sign in to access your dashboard</Text>
 
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
-              <TextInput
-                placeholder="Enter your email"
-                placeholderTextColor="#64748b"
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
-              <TextInput
-                placeholder="Enter your password"
-                placeholderTextColor="#64748b"
-                secureTextEntry={!isPasswordVisible}
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setPasswordVisible(!isPasswordVisible)}
-              >
-                <Ionicons
-                  name={isPasswordVisible ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color="#64748b"
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={20} color="#0ea5e9" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="name@company.com"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                 />
-              </TouchableOpacity>
+              </View>
             </View>
+
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={20} color="#0ea5e9" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!isPasswordVisible}
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setPasswordVisible(!isPasswordVisible)}
+                >
+                  <Ionicons
+                    name={isPasswordVisible ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color="#94a3b8"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            {/* Login Button */}
+            <TouchableOpacity 
+              style={styles.loginButton} 
+              onPress={handleLogin} 
+              disabled={loading}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#0047AB', '#0284c7']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.loginGradient}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                    <Ionicons name="chevron-forward" size={20} color="#fff" style={{ marginLeft: 5 }} />
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* <TouchableOpacity style={styles.footer}>
+              <Text style={styles.footerText}>Need help accessing your account?</Text>
+            </TouchableOpacity> */}
           </View>
-
-
-          {/* Error Message */}
-          {error ? (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={20} color="#ef4444" />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
-          {/* Login Button */}
-          <TouchableOpacity style={[styles.loginButton, styles.loginGradient]} onPress={handleLogin} activeOpacity={0.8}>
-            <Text style={styles.loginButtonText}>Sign In</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  headerBackground: { height: '40%', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  logoContainer: { alignItems: 'center' },
-  logoBox: { backgroundColor: '#0047AB', padding: 15, borderRadius: 20, marginBottom: 20 },
-  headerTitle: { fontSize: 26, fontWeight: 'bold', color: 'white', marginBottom: 10 },
-  headerSubtitle: { color: 'rgba(255,255,255,0.7)', textAlign: 'center', fontSize: 14 },
-  
+  container: { flex: 1, backgroundColor: '#f0f9ff' },
+  bubble: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    zIndex: 0,
+  },
+  headerBackground: {
+    height: height * 0.45,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoOuter: {
+    width: 100,
+    height: 100,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 50,
+    padding: 10,
+    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropShape: {
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 40,
+    borderTopLeftRadius: 0,
+    transform: [{ rotate: '-45deg' }], // Standard teardrop rotation
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  liquid: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#38bdf8',
+  },
+  fill: { flex: 1 },
+  logoIcon: {
+    transform: [{ rotate: '45deg' }], // Counter-rotate icon back to upright
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 5,
+  },
   formContainer: {
     flex: 1,
-    backgroundColor: 'white',
-    marginTop: -20,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 30,
+    marginTop: -50,
+    paddingHorizontal: 25,
   },
-  label: { fontWeight: '600', marginBottom: 8, color: '#333' },
+  formCard: {
+    backgroundColor: 'white',
+    borderRadius: 30,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1e293b',
+    textAlign: 'center',
+  },
+  welcomeSubtext: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 25,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F6FF',
-    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 15,
     paddingHorizontal: 15,
-    marginBottom: 20,
-    height: 55,
+    marginBottom: 18,
+    height: 58,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, height: '100%' },
-  forgotText: { textAlign: 'right', color: '#0047AB', fontWeight: '600', marginBottom: 30 },
-  
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, color: '#1e293b', fontSize: 16 },
   loginButton: {
-    backgroundColor: '#0047AB',
-    height: 55,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0047AB',
+    marginTop: 10,
+    borderRadius: 15,
+    overflow: 'hidden',
+    shadowColor: '#0ea5e9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowRadius: 8,
     elevation: 5,
   },
-  loginButtonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
-  line: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
-  dividerText: { marginHorizontal: 10, color: '#888' },
-  
-  googleButton: {
+  loginGradient: {
+    height: 58,
     flexDirection: 'row',
-    height: 55,
-    borderRadius: 12,
-    backgroundColor: '#F3F6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
   },
-  googleButtonText: { color: '#333', fontWeight: '600' },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
-  signUpText: { color: '#0047AB', fontWeight: 'bold' },
-loginGradient:{
-  flexDirection: 'row'
-},
+  loginButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#fff1f2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
   },
   errorText: {
-    color: '#dc2626',
-    fontSize: 14,
+    color: '#e11d48',
+    fontSize: 13,
     marginLeft: 8,
     flex: 1,
   },
-  loginButtonDisabled: {
-    opacity: 0.7,
+  footer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    color: '#0ea5e9',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
