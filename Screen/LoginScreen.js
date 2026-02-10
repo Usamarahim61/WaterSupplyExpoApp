@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, 
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Image,
   Animated, Dimensions, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -111,17 +111,9 @@ export default function LoginScreen({ navigation }) {
           style={styles.headerBackground}
         >
           <SafeAreaView style={styles.headerContent}>
-            {/* Custom Animated Water Drop Logo */}
+            {/* Logo Image */}
             <View style={styles.logoOuter}>
-               <View style={styles.dropShape}>
-                  <Animated.View style={[styles.liquid, { height: liquidHeight }]}>
-                    <LinearGradient 
-                      colors={['#38bdf8', '#0284c7']} 
-                      style={styles.fill} 
-                    />
-                  </Animated.View>
-                  <Ionicons name="water" size={45} color="#fff" style={styles.logoIcon} />
-               </View>
+               <Image source={require('../assets/nehmat.png')} style={styles.logoImage} />
             </View>
 
             <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center' }}>
@@ -251,12 +243,17 @@ const styles = StyleSheet.create({
   logoOuter: {
     width: 100,
     height: 100,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'white',
     borderRadius: 50,
     padding: 10,
     marginBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 40,
   },
   dropShape: {
     width: 80,

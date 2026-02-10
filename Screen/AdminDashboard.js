@@ -796,8 +796,8 @@ export default function AdminDashboard({ navigation }) {
           <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.headerGradient}>
             <View style={styles.headerContent}>
               <View>
-                <Text style={styles.headerTitle}>🌊 WaterFlow Admin</Text>
-                <Text style={styles.headerSubtitle}>Smart Water Supply Management</Text>
+                <Text style={styles.headerTitle}>🌊 Water Supply Admin</Text>
+                <Text style={styles.headerSubtitle}>Nehmat Water Supply Management</Text>
               </View>
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Ionicons name="log-out-outline" size={24} color="#fff" />
