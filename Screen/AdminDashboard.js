@@ -357,7 +357,15 @@ export default function AdminDashboard({ navigation }) {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#f0f9ff',
+    },
+    bubble: {
+      position: 'absolute',
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: '#fff',
+      zIndex: 0,
     },
     header: {
       marginTop: screenHeight * 0.05,
@@ -372,6 +380,8 @@ export default function AdminDashboard({ navigation }) {
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 8,
+      borderBottomLeftRadius: 50,
+      borderBottomRightRadius: 50,
     },
     headerContent: {
       flexDirection: 'row',

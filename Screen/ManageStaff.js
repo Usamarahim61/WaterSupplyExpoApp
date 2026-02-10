@@ -27,6 +27,14 @@ export default function ManageStaff({ navigation }) {
   const modalAnim = useRef(new Animated.Value(0)).current;
   const waveAnim1 = useRef(new Animated.Value(0)).current;
   const waveAnim2 = useRef(new Animated.Value(0)).current;
+  const bubbleAnim = useRef(new Animated.Value(0)).current;
+  const waterLevel = useRef(new Animated.Value(0)).current;
+
+  // Interpolate water height for the logo
+  const liquidHeight = waterLevel.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '70%'],
+  });
 
   // Form State
   const [staffData, setStaffData] = useState({
@@ -73,6 +81,12 @@ export default function ManageStaff({ navigation }) {
         duration: 800,
         useNativeDriver: true,
       }),
+      // Logo "Filling Up" animation
+      Animated.timing(waterLevel, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: false,
+      })
     ]).start();
 
     // Wave animations
@@ -447,11 +461,37 @@ export default function ManageStaff({ navigation }) {
       </Animated.View>
 
       {/* Header */}
-      <LinearGradient colors={['#0047AB', '#0284c7']} style={styles.header}>
+      <LinearGradient colors={['#075985', '#0047AB', '#f0f9ff']} style={styles.headerGradient}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Staff</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Animated.View
+              style={[
+                styles.liquid,
+                {
+                  height: liquidHeight,
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={['#38bdf8', '#0ea5e9']}
+                style={styles.fill}
+              />
+            </Animated.View>
+            <Ionicons
+              name="water"
+              size={30}
+              color="#fff"
+              style={styles.logoIcon}
+            />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Manage Staff</Text>
+            <Text style={styles.headerSubtitle}>Manage your staff members</Text>
+          </View>
+        </View>
         <TouchableOpacity style={styles.addBtn} onPress={openAddModal}>
           <Ionicons name="person-add" size={20} color="#fff" />
         </TouchableOpacity>
@@ -692,9 +732,10 @@ export default function ManageStaff({ navigation }) {
             </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
-      </Modal>
-    </SafeAreaView>
-  );
+    </Modal>
+
+  </SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -717,14 +758,57 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  header: {
+  headerGradient: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: width * 0.05,
     paddingTop: height * 0.06,
-        borderBottomLeftRadius: width * 0.075,
+    borderBottomLeftRadius: width * 0.075,
     borderBottomRightRadius: width * 0.075,
+  },
+  logoContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 25, // Add space to prevent overlap with back button
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  liquid: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#38bdf8',
+  },
+  fill: {
+    flex: 1,
+  },
+  logoIcon: {
+    transform: [{ rotate: '45deg' }],
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
   },
   backButton: {
     padding: 8,
